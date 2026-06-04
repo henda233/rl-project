@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-04 18:50:00
+> 🔄 最后同步：2026-06-04 19:00:00
 
 ## 模块总览
 
@@ -15,6 +15,7 @@
 | `AC参考实现` | [🔗](../wiki/abstract/examples/actor-critic-example.md) | PolicyNet/ValueNet 网络结构、ActorCritic.update 核心逻辑 | ✅ 无循环依赖 | 06-04 |
 | `RL工具函数` | [🔗](../wiki/abstract/examples/rl-utils.md) | ReplayBuffer、moving_average、on-policy训练循环 | ✅ 无循环依赖 | 06-04 |
 | `环境搭建模块` | [🔗](../wiki/abstract/env-setup.md) | config.py + make_env() 工厂函数，MountainCar-v0 环境封装 | ✅ 无循环依赖 | 06-04 |
+| `AC算法实现计划` | [🔗](../wiki/abstract/plan-actor-critic.md) | agent.py 单文件实现，超参数与渲染策略决策 | ✅ 无循环依赖 | 06-04 |
 
 ## 需求列表
 
@@ -27,13 +28,14 @@
 | 计划名称 | 计划路径 | 状态 |
 |---|---|---|
 | `搭建强化学习任务环境` | [🔗](../wiki/plan/setup-environment.md) | completed |
+| `实现强化学习算法` | [🔗](../wiki/plan/implement-actor-critic.md) | waiting |
 
 ## TODO列表
 
 - [x] 制定`1. 搭建强化学习任务环境`的执行计划
 - [x] 创建 config.py + env.py 环境模块，自检通过
-- [ ] 实现 Actor-Critic 算法
-- [ ] 完成训练与可视化
+- [x] 制定`2. 实现强化学习算法`的执行计划
+- [ ] 执行`2. 实现强化学习算法`计划
 
 ## 笔记
 
@@ -43,6 +45,7 @@
 
 ## 全局更新日志（近10条）
 
+- `06-04 19:00`: 制定`实现强化学习算法`执行计划 —— `wiki/plan/implement-actor-critic.md`
 - `06-04 18:50`: 完成`搭建强化学习任务环境`计划 —— 创建 config.py、env.py、wiki/abstract/env-setup.md
 - `06-04 18:40`: 制定`搭建强化学习任务环境`执行计划 —— `wiki/plan/setup-environment.md`
 - `06-04 18:36`: WIKI 记忆库初始化 —— 创建 8 个摘要、1 个需求文档、index.md、readme.md
