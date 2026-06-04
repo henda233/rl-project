@@ -7,6 +7,7 @@ from tqdm import tqdm
 from config import (
     HIDDEN_DIM, ACTOR_LR, CRITIC_LR, GAMMA,
     NUM_EPISODES, EVAL_INTERVAL,
+    REWARD_SHAPING_SCALE, EPSILON, EPSILON_DECAY, EPSILON_MIN,
 )
 from env import make_env
 
@@ -42,8 +43,11 @@ class ActorCritic:
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=critic_lr)
         self.gamma = gamma
         self.device = device
+        self.action_dim = action_dim
 
-    def take_action(self, state):
+    def take_action(self, state, epsilon=0.0):
+        if np.random.random() < epsilon:
+            return np.random.randint(self.action_dim)
         state = torch.tensor([state], dtype=torch.float).to(self.device)
         probs = self.actor(state)
         action_dist = torch.distributions.Categorical(probs)
@@ -95,11 +99,13 @@ def evaluate(env, agent):
     return episode_return
 
 
-def train_on_policy_agent(env, agent, num_episodes):
+def train_on_policy_agent(env, agent, num_episodes, epsilon):
     return_list = []
+    shaped_return_list = []
     pbar = tqdm(range(1, num_episodes + 1), desc='Training')
     for i_episode in pbar:
         episode_return = 0
+        shaped_episode_return = 0
         transition_dict = {
             'states': [], 'actions': [], 'next_states': [],
             'rewards': [], 'dones': [],
@@ -107,24 +113,39 @@ def train_on_policy_agent(env, agent, num_episodes):
         obs, info = env.reset()
         done = False
         while not done:
-            action = agent.take_action(obs)
+            action = agent.take_action(obs, epsilon)
             next_obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
+            shaped_reward = reward + REWARD_SHAPING_SCALE * (
+                GAMMA * abs(next_obs[1]) - abs(obs[1])
+            )
             transition_dict['states'].append(obs)
             transition_dict['actions'].append(action)
             transition_dict['next_states'].append(next_obs)
-            transition_dict['rewards'].append(reward)
+            transition_dict['rewards'].append(shaped_reward)
             transition_dict['dones'].append(done)
             obs = next_obs
             episode_return += reward
+            shaped_episode_return += shaped_reward
         return_list.append(episode_return)
+        shaped_return_list.append(shaped_episode_return)
         agent.update(transition_dict)
+        epsilon = max(EPSILON_MIN, epsilon * EPSILON_DECAY)
 
         if i_episode % 10 == 0:
             recent_avg = np.mean(return_list[-10:])
+            shaped_recent_avg = np.mean(shaped_return_list[-10:])
             pbar.set_postfix({
                 'return': f'{recent_avg:.1f}',
+                'shaped': f'{shaped_recent_avg:.1f}',
+                'eps': f'{epsilon:.3f}',
             })
+            tqdm.write(
+                f'[Episode {i_episode}] '
+                f'return(original): {recent_avg:.1f}, '
+                f'return(shaped): {shaped_recent_avg:.1f}, '
+                f'epsilon: {epsilon:.3f}'
+            )
 
         if i_episode % EVAL_INTERVAL == 0:
             eval_env = make_env(render_mode="human")
@@ -134,17 +155,29 @@ def train_on_policy_agent(env, agent, num_episodes):
                 f'[Eval  episode {i_episode}] return: {eval_return:.1f}'
             )
 
-    return return_list
+    return return_list, shaped_return_list
 
 
-def plot_return(return_list):
+def plot_return(return_list, shaped_return_list):
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
+
     mv = moving_average(return_list, 9)
-    plt.plot(return_list, alpha=0.4, color='steelblue', label='episode return')
-    plt.plot(mv, color='steelblue', label='moving avg (9)')
-    plt.xlabel('Episode')
-    plt.ylabel('Return')
-    plt.title('Actor-Critic on MountainCar-v0')
-    plt.legend()
+    ax1.plot(return_list, alpha=0.4, color='steelblue', label='episode return')
+    ax1.plot(mv, color='steelblue', label='moving avg (9)')
+    ax1.set_xlabel('Episode')
+    ax1.set_ylabel('Return (original)')
+    ax1.set_title('Actor-Critic on MountainCar-v0 (Original Reward)')
+    ax1.legend()
+
+    mv2 = moving_average(shaped_return_list, 9)
+    ax2.plot(shaped_return_list, alpha=0.4, color='darkorange', label='shaped episode return')
+    ax2.plot(mv2, color='darkorange', label='moving avg (9)')
+    ax2.set_xlabel('Episode')
+    ax2.set_ylabel('Return (shaped)')
+    ax2.set_title('Actor-Critic on MountainCar-v0 (Shaped Reward)')
+    ax2.legend()
+
+    plt.tight_layout()
     plt.show()
 
 
@@ -159,10 +192,12 @@ def main():
     agent = ActorCritic(state_dim, HIDDEN_DIM, action_dim, ACTOR_LR, CRITIC_LR,
                         GAMMA, device)
 
-    return_list = train_on_policy_agent(env, agent, NUM_EPISODES)
+    return_list, shaped_return_list = train_on_policy_agent(
+        env, agent, NUM_EPISODES, EPSILON,
+    )
     env.close()
 
-    plot_return(return_list)
+    plot_return(return_list, shaped_return_list)
 
 
 if __name__ == "__main__":
