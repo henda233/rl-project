@@ -2,12 +2,14 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import matplotlib.pyplot as plt
+from math import sin
 from tqdm import tqdm
 
 from config import (
     HIDDEN_DIM, ACTOR_LR, CRITIC_LR, GAMMA,
     NUM_EPISODES, EVAL_INTERVAL,
-    REWARD_SHAPING_SCALE, EPSILON, EPSILON_DECAY, EPSILON_MIN,
+    REWARD_SHAPING_SCALE, G, PE_COEFFICIENT,
+    EPSILON, EPSILON_DECAY, EPSILON_MIN,
 )
 from env import make_env
 
@@ -116,8 +118,10 @@ def train_on_policy_agent(env, agent, num_episodes, epsilon):
             action = agent.take_action(obs, epsilon)
             next_obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
+            potential = PE_COEFFICIENT * sin(3 * obs[0]) + obs[1]**2 / (2 * G)
+            next_potential = PE_COEFFICIENT * sin(3 * next_obs[0]) + next_obs[1]**2 / (2 * G)
             shaped_reward = reward + REWARD_SHAPING_SCALE * (
-                GAMMA * abs(next_obs[1]) - abs(obs[1])
+                GAMMA * next_potential - potential
             )
             transition_dict['states'].append(obs)
             transition_dict['actions'].append(action)
