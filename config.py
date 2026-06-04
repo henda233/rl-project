@@ -1,0 +1,3 @@
+ENV_NAME = "MountainCar-v0"
+RENDER_MODE = "human"
+MAX_EPISODE_STEPS = 200
