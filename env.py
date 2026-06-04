@@ -2,8 +2,9 @@ import gymnasium as gym
 from config import ENV_NAME, RENDER_MODE
 
 
-def make_env():
-    return gym.make(ENV_NAME, render_mode=RENDER_MODE)
+def make_env(render_mode=None):
+    mode = render_mode if render_mode is not None else RENDER_MODE
+    return gym.make(ENV_NAME, render_mode=mode)
 
 
 if __name__ == "__main__":
