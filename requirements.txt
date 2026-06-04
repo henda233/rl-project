@@ -1,6 +1,4 @@
---extra-index-url https://download.pytorch.org/whl/cu132
 gymnasium
 matplotlib
 numpy
-torch
 tqdm
