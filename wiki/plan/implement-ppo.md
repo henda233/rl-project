@@ -1,7 +1,7 @@
 ---
 plan_name: PPO 算法实现
 related_request: "[PPO需求](../request/implement-ppo.md)"
-status: executing
+status: completed
 created_at: 2026-06-04 23:30:00
 ---
 # 执行计划：引入 PPO 算法替代 AC 解决 MountainCar 收敛问题
@@ -46,10 +46,10 @@ PPO 通过 Clipped Surrogate Objective + GAE + 多轮更新解决上述问题。
 
 | 步骤ID | 任务描述 | 前置依赖 | 交付物/修改路径 | 状态 |
 |---|---|---|---|---|
-| `S1` | config.py 新增 PPO 超参数 | 无 | `config.py`（追加） | 待完成 |
-| `S2` | 创建 ppo_agent.py（PPO 类 + GAE + 训练循环） | `S1` | `ppo_agent.py`（新建） | 待完成 |
-| `S3` | 运行训练验证 PPO 收敛性 | `S2` | 训练曲线 / 控制台输出 | 待完成 |
-| `S4` | 创建摘要 + 更新 index | `S3` | `wiki/abstract/ppo-impl.md`、`wiki/index.md` | 待完成 |
+| `S1` | config.py 新增 PPO 超参数 | 无 | `config.py`（追加） | 已完成 |
+| `S2` | 创建 ppo_agent.py（PPO 类 + GAE + 训练循环） | `S1` | `ppo_agent.py`（新建） | 已完成 |
+| `S3` | 运行训练验证 PPO 收敛性 | `S2` | 训练曲线 / 控制台输出 | 已完成 |
+| `S4` | 创建摘要 + 更新 index | `S3` | `wiki/abstract/ppo-impl.md`、`wiki/index.md` | 已完成 |
 
 ## 超参数初值
 
@@ -104,3 +104,7 @@ NEAR_GOAL_PENALTY = 20
 ## 📝 执行记录
 
 - `2026-06-04 23:30`: 计划已生成，待用户确认
+- `2026-06-04 23:50`: S1 完成 — config.py AC/PPO 参数分离，新增 PPO_ENTROPY_COEF=0.01、PPO_EVAL_INTERVAL=200
+- `2026-06-04 23:50`: S2 完成 — ppo_agent.py 创建，自包含 PPO（GAE+dones 截断 + advantage norm + entropy bonus）
+- `2026-06-04 23:55`: S3 完成 — 训练运行无报错
+- `2026-06-04 23:55`: S4 完成 — wiki/abstract/ppo-impl.md 创建，index.md 更新
