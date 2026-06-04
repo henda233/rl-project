@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-04 23:15:00
+> 🔄 最后同步：2026-06-04 23:45:00
 
 ## 模块总览
 
@@ -30,6 +30,7 @@
 | `MountainCar收敛需求` | [🔗](../wiki/request/mountaincar-convergence.md) | completed | `MountainCar稀疏奖励收敛`→`Energy-Based 奖励塑形`（已完成） |
 | `Energy-Based 塑形需求` | [🔗](../wiki/request/energy-based-shaping.md) | completed | `Energy-Based 奖励塑形`（已完成） |
 | `回合相对进度塑形需求` | [🔗](../wiki/request/episode-relative-progress.md) | completed | `回合相对进度奖励塑形`（已完成，但不收敛） |
+| `PPO算法实现需求` | [🔗](../wiki/request/implement-ppo.md) | pending | `PPO 算法实现`（待确认） |
 
 ## 计划列表
 
@@ -40,10 +41,12 @@
 | `MountainCar稀疏奖励收敛` | [🔗](../wiki/plan/mountaincar-convergence.md) | completed |
 | `Energy-Based 奖励塑形` | [🔗](../wiki/plan/energy-based-shaping.md) | completed |
 | `回合相对进度奖励塑形` | [🔗](../wiki/plan/episode-relative-progress.md) | completed |
+| `PPO 算法实现` | [🔗](../wiki/plan/implement-ppo.md) | waitting |
 
 ## TODO列表
 
 - [ ] 解决 AC 算法不收敛问题（三种奖励塑形方案均失败，推测根因为 AC 算法本身局限性：网络结构、on-policy 样本效率、超参数等）
+- [ ] PPO 算法实现（新建 ppo_agent.py，保留奖励塑形，待用户确认计划）
 
 ## 笔记
 
@@ -59,6 +62,7 @@
 
 ## 全局更新日志（近5条）
 
+- `06-04 23:45`: PPO 需求与计划创建——新增 request/implement-ppo.md、plan/implement-ppo.md，等待用户确认计划后执行。
 - `06-04 23:15`: 回合相对进度塑形完成——创建 request/plan/abstract，代码可运行但不收敛，推测 AC 算法局限。
 - `06-04 22:40`: Energy-Based 塑形执行完毕——创建 abstract、更新 index，config.py 新增 G/PE_COEFFICIENT，agent.py 替换公式。
 - `06-04 21:00`: MountainCar 收敛计划执行完毕——奖励塑形(Φ=|v|,C=10) + ε-greedy(0.3→0.01,decay=0.999)，训练增加塑性奖励显示。
