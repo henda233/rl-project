@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -121,12 +122,16 @@ def evaluate(env, agent):
 
 
 def train_on_policy_agent(env, agent, num_episodes):
+    os.makedirs("results/models", exist_ok=True)
     return_list = []
     shaped_return_list = []
+    max_pos_list = []
+    best_shaped_return = -float('inf')
     pbar = tqdm(range(1, num_episodes + 1), desc='Training PPO')
     for i_episode in pbar:
         episode_return = 0
         shaped_episode_return = 0
+        max_position = 0
         transition_dict = {
             'states': [], 'actions': [], 'next_states': [],
             'rewards': [], 'dones': [],
@@ -137,6 +142,7 @@ def train_on_policy_agent(env, agent, num_episodes):
             action = agent.take_action(obs)
             next_obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
+            max_position = max(max_position, obs[0])
             shaped_reward = reward + POTENTIAL_K * (PPO_GAMMA * next_obs[0] - obs[0])
             transition_dict['states'].append(obs)
             transition_dict['actions'].append(action)
@@ -148,19 +154,33 @@ def train_on_policy_agent(env, agent, num_episodes):
             shaped_episode_return += shaped_reward
         return_list.append(episode_return)
         shaped_return_list.append(shaped_episode_return)
+        max_pos_list.append(max_position)
         agent.update(transition_dict)
+
+        if shaped_episode_return > best_shaped_return:
+            best_shaped_return = shaped_episode_return
+            torch.save(agent.actor.state_dict(), "results/models/ppo_actor_best.pth")
+            torch.save(agent.critic.state_dict(), "results/models/ppo_critic_best.pth")
+
+        if max_position >= 0.5:
+            tqdm.write(f'[Cleared! Episode {i_episode}] max_position={max_position:.3f}')
+            torch.save(agent.actor.state_dict(), "results/models/ppo_actor_cleared.pth")
+            torch.save(agent.critic.state_dict(), "results/models/ppo_critic_cleared.pth")
 
         if i_episode % 10 == 0:
             recent_avg = np.mean(return_list[-10:])
             shaped_recent_avg = np.mean(shaped_return_list[-10:])
+            recent_max_pos = np.mean(max_pos_list[-10:])
             pbar.set_postfix({
                 'return': f'{recent_avg:.1f}',
                 'shaped': f'{shaped_recent_avg:.1f}',
+                'max_pos': f'{recent_max_pos:.3f}',
             })
             tqdm.write(
                 f'[Episode {i_episode}] '
                 f'return(original): {recent_avg:.1f}, '
-                f'return(shaped): {shaped_recent_avg:.1f}'
+                f'return(shaped): {shaped_recent_avg:.1f}, '
+                f'max_pos: {recent_max_pos:.3f}'
             )
 
         if i_episode % PPO_EVAL_INTERVAL == 0:
@@ -194,6 +214,8 @@ def plot_return(return_list, shaped_return_list):
     ax2.legend()
 
     plt.tight_layout()
+    os.makedirs("results/imgs", exist_ok=True)
+    fig.savefig("results/imgs/ppo_training_results.png", dpi=150)
     plt.show()
 
 

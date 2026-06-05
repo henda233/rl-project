@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-05
+> 🔄 最后同步：2026-06-05 17:00:00
 
 ## 模块总览
 
@@ -17,6 +17,7 @@
 | `Potential-Based 塑形` | [🔗](./abstract/potential-based-shaping.md) | Φ=k·pos 极简势函数（当前方案），Ng et al. 定理保证策略不变性 | ✅ | 06-05 |
 | `PPO 算法` | [🔗](./abstract/ppo-impl.md) / [计划](./plan/implement-ppo.md) | GAE + advantage norm + entropy bonus，PPO_USE_GPU 控制设备 | ✅ | 06-05 |
 | `PPO 并行训练` | [🔗](./abstract/ppo-parallel-training.md) / [计划](./plan/ppo-parallel-training.md) | multiprocessing 多 k 对比，自动选最优，双 subplot 可视化 | ✅ | 06-05 |
+| `PPO 训练增强` | [计划](./plan/ppo-training-enhancement.md) / [需求](./request/ppo-training-enhancement.md) | 模型保存 + 通关检测(>=0.5) + 图保存 + 推理录制 mp4 | ✅ | 06-05 |
 
 ## 需求列表
 
@@ -29,6 +30,7 @@
 | `PPO算法实现需求` | [🔗](./request/implement-ppo.md) | completed | `PPO 算法实现`（已完成） |
 | `PPO 并行训练需求` | [🔗](./request/ppo-parallel-training.md) | completed | `PPO 并行训练（多 k 对比）`（已完成） |
 | `PPO 设备配置需求` | [🔗](./request/ppo-device-config.md) | completed | — |
+| `PPO 训练增强需求` | [🔗](./request/ppo-training-enhancement.md) | completed | `PPO 训练增强`（已完成） |
 
 ## 计划列表
 
@@ -41,10 +43,12 @@
 | `回合相对进度奖励塑形` | [🔗](./plan/episode-relative-progress.md) | completed |
 | `PPO 算法实现` | [🔗](./plan/implement-ppo.md) | completed |
 | `PPO 并行训练（多 k 对比）` | [🔗](./plan/ppo-parallel-training.md) | completed |
+| `PPO 训练增强` | [🔗](./plan/ppo-training-enhancement.md) | completed |
 
 ## TODO列表
 
 - [x] 执行`PPO 并行训练`计划。
+- [x] 执行`PPO 训练增强`计划。
 
 ## 笔记
 
@@ -61,6 +65,8 @@
 
 ## 全局更新日志（近5条）
 
+- `06-05`: PPO 训练增强完成——最优模型保存(shaped return + cleared) + 通关检测 + savefig + run_ppo_agent.py 推理录制。
+- `06-05`: PPO 训练增强计划制定——模型保存 + 通关检测(>=0.5) + 图保存到 results/imgs/ + 推理录制 mp4。
 - `06-05`: PPO 设备配置——config.py 新增 PPO_USE_GPU，ppo_agent/ppo_parallel 统一读取配置。
 - `06-05`: PPO 并行训练完成——ppo_parallel.py 多进程多 k 对比，自动选最优，双 subplot 可视化。
 - `06-05`: Potential-Based 塑形——Φ=k·pos 极简势函数（当前方案），Ng et al. 定理保证策略不变性。

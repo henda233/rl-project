@@ -29,6 +29,7 @@ PPO_NUM_EPISODES = 10000               # 训练总 episode 数
 PPO_EVAL_INTERVAL = 500               # 评估间隔
 PPO_ENTROPY_COEF = 0.05               # 熵正则化系数
 PPO_USE_GPU = False                  # 是否使用 GPU 训练（True=cuda, False=cpu）
+PPO_INFERENCE_EPISODES = 3           # 推理录制时运行的 episode 数
 
 # ==================== 奖励塑形（两个算法共用） ====================
 
