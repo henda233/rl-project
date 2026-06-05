@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-05 00:00:00
+> 🔄 最后同步：2026-06-05
 
 ## 模块总览
 
@@ -23,6 +23,8 @@
 | `回合相对进度塑形` | [🔗](../wiki/abstract/episode-relative-progress.md) | 追踪 max_x/min_x 打破记录奖励 + 速度信号 + 近终点惩罚，替换 energy-based | ✅ 无循环依赖 | 06-04 |
 | `PPO算法实现` | [🔗](../wiki/abstract/ppo-impl.md) | PPO（GAE+dones截断+advantage norm+entropy bonus）替代 AC，ppo_agent.py 自包含 | ✅ 无循环依赖 | 06-04 |
 | `Potential-Based 塑形` | [🔗](../wiki/abstract/potential-based-shaping.md) | Φ=k·pos，极简势函数，替换回合相对进度塑形，Ng et al. 定理保证 | ✅ 无循环依赖 | 06-05 |
+| `PPO 并行训练计划` | [🔗](../wiki/plan/ppo-parallel-training.md) | multiprocessing 多进程独立 PPO agent，不同 k 值对比，自动选最优 | ✅ 无循环依赖 | 06-05 |
+| `PPO 并行训练实现` | [🔗](../wiki/abstract/ppo-parallel-training.md) | ppo_parallel.py 独立脚本，train_single_agent worker，双 subplot 对比，模型保存到 results/models/ | ✅ 无循环依赖 | 06-05 |
 
 ## 需求列表
 
@@ -33,6 +35,7 @@
 | `Energy-Based 塑形需求` | [🔗](../wiki/request/energy-based-shaping.md) | completed | `Energy-Based 奖励塑形`（已完成） |
 | `回合相对进度塑形需求` | [🔗](../wiki/request/episode-relative-progress.md) | completed | `回合相对进度奖励塑形`（已完成，但不收敛） |
 | `PPO算法实现需求` | [🔗](../wiki/request/implement-ppo.md) | completed | `PPO 算法实现`（已完成） |
+| `PPO 并行训练需求` | [🔗](../wiki/request/ppo-parallel-training.md) | completed | `PPO 并行训练（多 k 对比）`（已完成） |
 
 ## 计划列表
 
@@ -44,10 +47,11 @@
 | `Energy-Based 奖励塑形` | [🔗](../wiki/plan/energy-based-shaping.md) | completed |
 | `回合相对进度奖励塑形` | [🔗](../wiki/plan/episode-relative-progress.md) | completed |
 | `PPO 算法实现` | [🔗](../wiki/plan/implement-ppo.md) | completed |
+| `PPO 并行训练（多 k 对比）` | [🔗](../wiki/plan/ppo-parallel-training.md) | completed |
 
 ## TODO列表
 
-
+- [x] 执行`PPO 并行训练`计划。
 
 ## 笔记
 
@@ -64,6 +68,8 @@
 
 ## 全局更新日志（近5条）
 
+- `06-05 00:30`: PPO 并行训练计划制定——创建 request/ppo-parallel-training.md 和 plan/ppo-parallel-training.md，更新 index。
+- `06-05`: PPO 并行训练实现完成——config.py 新增 PPO_NUM_ENVS/POTENTIAL_K_START/POTENTIAL_K_INTERVAL，新建 ppo_parallel.py（独立脚本、train_single_agent worker、plot_comparison 双 subplot、自动选最优 k），wiki 记忆库更新。
 - `06-05 00:00`: Potential-Based 奖励塑形完成——config.py 移除 7 个进度塑形参数，新增 POTENTIAL_K=1；ppo_agent.py/agent.py 塑形逻辑替换为 `reward + k(γ·pos' - pos)`，极简势函数 Φ=k·pos。
 - `06-04 23:55`: PPO 算法实现完成——创建 ppo_agent.py（自包含 PPO：GAE+dones 截断+advantage norm+entropy bonus），config.py AC/PPO 参数分离，wiki 记忆库更新。
 - `06-04 23:15`: 回合相对进度塑形完成——创建 request/plan/abstract，代码可运行但不收敛，推测 AC 算法局限。

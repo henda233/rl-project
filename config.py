@@ -25,7 +25,7 @@ PPO_GAMMA = 0.98                      # 折扣因子（支持长程信用分配�
 PPO_LMBDA = 0.95                      # GAE λ
 PPO_EPOCHS = 10                       # 每批数据训练轮数
 PPO_EPS = 0.2                         # Clip 范围
-PPO_NUM_EPISODES = 500               # 训练总 episode 数
+PPO_NUM_EPISODES = 50               # 训练总 episode 数
 PPO_EVAL_INTERVAL = 500               # 评估间隔
 PPO_ENTROPY_COEF = 0.01               # 熵正则化系数
 
@@ -36,3 +36,9 @@ PPO_ENTROPY_COEF = 0.01               # 熵正则化系数
 # shaped_reward = original_reward + (γ·Φ(s') - Φ(s))
 # Ng et al. 定理保证：不改变最优策略。
 POTENTIAL_K = 5  # 势函数系数 k
+
+# ==================== PPO 并行训练配置（ppo_parallel.py 使用） ====================
+
+PPO_NUM_ENVS = 5            # 并行环境数量
+POTENTIAL_K_START = 1     # k 起始值
+POTENTIAL_K_INTERVAL = 2  # k 间隔
