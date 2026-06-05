@@ -7,14 +7,14 @@ import os
 from config import (
     PPO_HIDDEN_DIM, PPO_ACTOR_LR, PPO_CRITIC_LR, PPO_GAMMA,
     PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_NUM_EPISODES,
-    PPO_ENTROPY_COEF, PPO_NUM_ENVS, POTENTIAL_K_START, POTENTIAL_K_INTERVAL,
+    PPO_ENTROPY_COEF, PPO_USE_GPU, PPO_NUM_ENVS, POTENTIAL_K_START, POTENTIAL_K_INTERVAL,
 )
 from env import make_env
 from ppo_agent import PolicyNet, ValueNet, PPO, moving_average
 
 
 def train_single_agent(k_value, seed, result_queue):
-    device = torch.device("cpu")
+    device = torch.device("cuda" if PPO_USE_GPU else "cpu")
     torch.manual_seed(seed)
 
     env = make_env()

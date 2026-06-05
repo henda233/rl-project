@@ -25,9 +25,10 @@ PPO_GAMMA = 0.98                      # 折扣因子（支持长程信用分配�
 PPO_LMBDA = 0.95                      # GAE λ
 PPO_EPOCHS = 10                       # 每批数据训练轮数
 PPO_EPS = 0.2                         # Clip 范围
-PPO_NUM_EPISODES = 50               # 训练总 episode 数
+PPO_NUM_EPISODES = 5000               # 训练总 episode 数
 PPO_EVAL_INTERVAL = 500               # 评估间隔
 PPO_ENTROPY_COEF = 0.01               # 熵正则化系数
+PPO_USE_GPU = False                  # 是否使用 GPU 训练（True=cuda, False=cpu）
 
 # ==================== 奖励塑形（两个算法共用） ====================
 

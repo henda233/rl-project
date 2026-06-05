@@ -22,6 +22,7 @@ updated_at: 2026-06-05
 - 并行训练期间**完全禁用评估**（避免多窗口冲突）
 - 对比指标：原始 return + 塑形 return 双 subplot，N 条曲线叠加，移动平均平滑
 - 最优 k 评判标准：塑形 return 单次 episode 最高
+- `PPO_USE_GPU` 控制 device 创建（`train_single_agent` 统一读取配置，默认 CPU）
 
 ## 内容概述
 
@@ -44,4 +45,4 @@ updated_at: 2026-06-05
 
 - **上游依赖**：`wiki/abstract/ppo-impl.md`（PPO 类、网络结构）、`wiki/abstract/potential-based-shaping.md`（Φ=k·pos 公式）
 - **下游被依赖**：无
-- **变更扩散评估**：低（ppo_parallel.py 独立文件，config.py 仅追加 3 个参数，ppo_agent.py 不受影响）
+- **变更扩散评估**：低（ppo_parallel.py 独立文件，config.py 仅追加 4 个参数，ppo_agent.py 同步读取 PPO_USE_GPU）

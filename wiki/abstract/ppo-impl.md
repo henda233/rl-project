@@ -8,7 +8,7 @@ dependencies:
   - "wiki/request/implement-ppo.md"
   - "wiki/plan/implement-ppo.md"
 created_at: 2026-06-04 23:50:00
-updated_at: 2026-06-04 23:50:00
+updated_at: 2026-06-05
 ---
 # 摘要：PPO 算法实现
 
@@ -20,12 +20,13 @@ updated_at: 2026-06-04 23:50:00
 - 添加 Advantage Normalization + Entropy Bonus（coef=0.01），替代 ε-greedy 探索
 - AC/PPO 训练参数完全分离（config.py 中独立前缀），奖励塑形参数共享
 - ppo_agent.py 自包含，与 agent.py 零耦合
+- `PPO_USE_GPU=False` 控制训练设备（True=cuda, False=cpu），默认 CPU，移除自动检测
 
 ## 内容概述
 
 > `ppo_agent.py` 包含完整的 PPO 实现：PolicyNet/ValueNet、compute_gae（含 dones 截断）、PPO 类（clipped objective + advantage norm + entropy bonus）、on-policy 训练循环（复用 episode-relative progress 奖励塑形）、moving_average/evaluate/plot_return 工具函数、main 入口。
 >
-> `config.py` 新增 PPO_ 前缀参数组（PPO_HIDDEN_DIM=256, PPO_GAMMA=0.98, PPO_LMBDA=0.95, PPO_EPOCHS=10, PPO_EPS=0.2, PPO_NUM_EPISODES=5000, PPO_EVAL_INTERVAL=200, PPO_ENTROPY_COEF=0.01），与 AC 参数分节管理。
+> `config.py` 新增 PPO_ 前缀参数组（PPO_HIDDEN_DIM=256, PPO_GAMMA=0.98, PPO_LMBDA=0.95, PPO_EPOCHS=10, PPO_EPS=0.2, PPO_NUM_EPISODES=5000, PPO_EVAL_INTERVAL=200, PPO_ENTROPY_COEF=0.01, PPO_USE_GPU=False），与 AC 参数分节管理。
 
 ## 关键设计决策
 

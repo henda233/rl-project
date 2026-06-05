@@ -7,7 +7,7 @@ from tqdm import tqdm
 from config import (
     PPO_HIDDEN_DIM, PPO_ACTOR_LR, PPO_CRITIC_LR, PPO_GAMMA,
     PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_NUM_EPISODES, PPO_EVAL_INTERVAL,
-    PPO_ENTROPY_COEF, POTENTIAL_K,
+    PPO_ENTROPY_COEF, PPO_USE_GPU, POTENTIAL_K,
 )
 from env import make_env
 
@@ -198,7 +198,7 @@ def plot_return(return_list, shaped_return_list):
 
 
 def main():
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    device = torch.device("cuda" if PPO_USE_GPU else "cpu")
 
     env = make_env()
     torch.manual_seed(0)

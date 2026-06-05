@@ -6,48 +6,41 @@
 
 | 摘要名称 | 摘要路径 | 关键摘要内容 | 依赖健康度 | 最后更新 |
 |---|---|---|---|---|
-| `项目概述` | [🔗](../wiki/abstract/docs/project-overview.md) | MountainCar-v0 + Actor-Critic 项目总览，技术栈与约束 | ✅ 无循环依赖 | 06-04 |
-| `Actor-Critic算法` | [🔗](../wiki/abstract/docs/actor-critic-algorithm.md) | TD残差驱动的双网络（Actor/Critic）更新公式与流程 | ✅ 无循环依赖 | 06-04 |
-| `MountainCar环境` | [🔗](../wiki/abstract/gymnasium/mountain-car.md) | Discrete(3) 动作，Box(2) 观测，每步-1奖励，200步截断 | ✅ 无循环依赖 | 06-04 |
-| `智能体训练` | [🔗](../wiki/abstract/gymnasium/agent-training.md) | ε-greedy、训练循环模式、gym/gymnasium API差异 | ✅ 无循环依赖 | 06-04 |
-| `自定义环境` | [🔗](../wiki/abstract/gymnasium/custom-env.md) | gymnasium.Env 继承规范、reset/step 实现模板（当前阶段不直接使用） | ✅ 无循环依赖 | 06-04 |
-| `智能体记录` | [🔗](../wiki/abstract/gymnasium/recording-agent.md) | RecordEpisodeStatistics/RecordVideo wrapper 用法 | ✅ 无循环依赖 | 06-04 |
-| `AC参考实现` | [🔗](../wiki/abstract/examples/actor-critic-example.md) | PolicyNet/ValueNet 网络结构、ActorCritic.update 核心逻辑 | ✅ 无循环依赖 | 06-04 |
-| `RL工具函数` | [🔗](../wiki/abstract/examples/rl-utils.md) | ReplayBuffer、moving_average、on-policy训练循环 | ✅ 无循环依赖 | 06-04 |
-| `环境搭建模块` | [🔗](../wiki/abstract/env-setup.md) | config.py + make_env() 工厂函数，MountainCar-v0 环境封装 | ✅ 无循环依赖 | 06-04 |
-| `AC算法实现计划` | [🔗](../wiki/abstract/plan-actor-critic.md) | agent.py 单文件实现，超参数与渲染策略决策 | ✅ 无循环依赖 | 06-04 |
-| `AC算法实现模块` | [🔗](../wiki/abstract/actor-critic-impl.md) | agent.py 完整实现，gymnasium 适配，已知稀疏奖励不收敛问题 | ✅ 无循环依赖 | 06-04 |
-| `MountainCar收敛方案` | [🔗](../wiki/plan/mountaincar-convergence.md) | 奖励塑形(Φ=|v|,C=10) + ε-greedy(0.3→0.01,decay=0.999)，已执行但不收敛 | ✅ 无循环依赖 | 06-04 |
-| `Energy-Based 塑形计划` | [🔗](../wiki/plan/energy-based-shaping.md) | Φ=sin(3·pos)+v²/(2g)，C=10，替换 velocity-based 势函数，物理直觉驱动 | ✅ 无循环依赖 | 06-04 |
-| `Energy-Based 塑形实现` | [🔗](../wiki/abstract/energy-based-shaping.md) | 势函数公式、最终超参数、改动范围与不改动部分 | ✅ 无循环依赖 | 06-04 |
-| `回合相对进度塑形` | [🔗](../wiki/abstract/episode-relative-progress.md) | 追踪 max_x/min_x 打破记录奖励 + 速度信号 + 近终点惩罚，替换 energy-based | ✅ 无循环依赖 | 06-04 |
-| `PPO算法实现` | [🔗](../wiki/abstract/ppo-impl.md) | PPO（GAE+dones截断+advantage norm+entropy bonus）替代 AC，ppo_agent.py 自包含 | ✅ 无循环依赖 | 06-04 |
-| `Potential-Based 塑形` | [🔗](../wiki/abstract/potential-based-shaping.md) | Φ=k·pos，极简势函数，替换回合相对进度塑形，Ng et al. 定理保证 | ✅ 无循环依赖 | 06-05 |
-| `PPO 并行训练计划` | [🔗](../wiki/plan/ppo-parallel-training.md) | multiprocessing 多进程独立 PPO agent，不同 k 值对比，自动选最优 | ✅ 无循环依赖 | 06-05 |
-| `PPO 并行训练实现` | [🔗](../wiki/abstract/ppo-parallel-training.md) | ppo_parallel.py 独立脚本，train_single_agent worker，双 subplot 对比，模型保存到 results/models/ | ✅ 无循环依赖 | 06-05 |
+| `项目概述` | [🔗](./abstract/docs/project-overview.md) | MountainCar-v0 + Actor-Critic 项目总览，技术栈与约束 | ✅ | 06-04 |
+| `Actor-Critic 算法` | [🔗](./abstract/docs/actor-critic-algorithm.md) | TD 残差驱动 Actor/Critic 双网络更新 | ✅ | 06-04 |
+| `MountainCar 环境` | [🔗](./abstract/gymnasium/mountain-car.md) | Discrete(3) 动作，Box(2) 观测，-1/step，200 步截断 | ✅ | 06-04 |
+| `Gymnasium 参考` | [🔗](./abstract/gymnasium/agent-training.md) / [custom-env](./abstract/gymnasium/custom-env.md) / [recording](./abstract/gymnasium/recording-agent.md) | ε-greedy 训练循环、Env 继承规范、Record wrapper 用法 | ✅ | 06-04 |
+| `参考代码` | [🔗](./abstract/examples/actor-critic-example.md) / [rl-utils](./abstract/examples/rl-utils.md) | PolicyNet/ValueNet 结构、ReplayBuffer、on-policy 循环 | ✅ | 06-04 |
+| `环境搭建` | [🔗](./abstract/env-setup.md) | config.py + make_env() 工厂函数 | ✅ | 06-04 |
+| `AC 实现` | [🔗](./abstract/actor-critic-impl.md) / [计划](./plan/implement-actor-critic.md) | agent.py gymnasium 适配，已知稀疏奖励不收敛 | ✅ | 06-04 |
+| `奖励塑形探索` | [🔗](./plan/mountaincar-convergence.md) / [energy](./plan/energy-based-shaping.md) / [progress](./plan/episode-relative-progress.md) | Velocity→Energy→Progress 三次尝试均不收敛，详见笔记 | ✅ | 06-04 |
+| `Potential-Based 塑形` | [🔗](./abstract/potential-based-shaping.md) | Φ=k·pos 极简势函数（当前方案），Ng et al. 定理保证策略不变性 | ✅ | 06-05 |
+| `PPO 算法` | [🔗](./abstract/ppo-impl.md) / [计划](./plan/implement-ppo.md) | GAE + advantage norm + entropy bonus，PPO_USE_GPU 控制设备 | ✅ | 06-05 |
+| `PPO 并行训练` | [🔗](./abstract/ppo-parallel-training.md) / [计划](./plan/ppo-parallel-training.md) | multiprocessing 多 k 对比，自动选最优，双 subplot 可视化 | ✅ | 06-05 |
 
 ## 需求列表
 
 | 需求名称 | 需求路径 | 状态 | 关联计划 |
 |---|---|---|---|
-| `初始项目需求` | [🔗](../wiki/request/initial-requirements.md) | pending | `实现强化学习算法`（已完成） |
-| `MountainCar收敛需求` | [🔗](../wiki/request/mountaincar-convergence.md) | completed | `MountainCar稀疏奖励收敛`→`Energy-Based 奖励塑形`（已完成） |
-| `Energy-Based 塑形需求` | [🔗](../wiki/request/energy-based-shaping.md) | completed | `Energy-Based 奖励塑形`（已完成） |
-| `回合相对进度塑形需求` | [🔗](../wiki/request/episode-relative-progress.md) | completed | `回合相对进度奖励塑形`（已完成，但不收敛） |
-| `PPO算法实现需求` | [🔗](../wiki/request/implement-ppo.md) | completed | `PPO 算法实现`（已完成） |
-| `PPO 并行训练需求` | [🔗](../wiki/request/ppo-parallel-training.md) | completed | `PPO 并行训练（多 k 对比）`（已完成） |
+| `初始项目需求` | [🔗](./request/initial-requirements.md) | pending | `实现强化学习算法`（已完成） |
+| `MountainCar收敛需求` | [🔗](./request/mountaincar-convergence.md) | completed | `MountainCar稀疏奖励收敛`→`Energy-Based 奖励塑形`（已完成） |
+| `Energy-Based 塑形需求` | [🔗](./request/energy-based-shaping.md) | completed | `Energy-Based 奖励塑形`（已完成） |
+| `回合相对进度塑形需求` | [🔗](./request/episode-relative-progress.md) | completed | `回合相对进度奖励塑形`（已完成，但不收敛） |
+| `PPO算法实现需求` | [🔗](./request/implement-ppo.md) | completed | `PPO 算法实现`（已完成） |
+| `PPO 并行训练需求` | [🔗](./request/ppo-parallel-training.md) | completed | `PPO 并行训练（多 k 对比）`（已完成） |
+| `PPO 设备配置需求` | [🔗](./request/ppo-device-config.md) | completed | — |
 
 ## 计划列表
 
 | 计划名称 | 计划路径 | 状态 |
 |---|---|---|
-| `搭建强化学习任务环境` | [🔗](../wiki/plan/setup-environment.md) | completed |
-| `实现强化学习算法` | [🔗](../wiki/plan/implement-actor-critic.md) | completed |
-| `MountainCar稀疏奖励收敛` | [🔗](../wiki/plan/mountaincar-convergence.md) | completed |
-| `Energy-Based 奖励塑形` | [🔗](../wiki/plan/energy-based-shaping.md) | completed |
-| `回合相对进度奖励塑形` | [🔗](../wiki/plan/episode-relative-progress.md) | completed |
-| `PPO 算法实现` | [🔗](../wiki/plan/implement-ppo.md) | completed |
-| `PPO 并行训练（多 k 对比）` | [🔗](../wiki/plan/ppo-parallel-training.md) | completed |
+| `搭建强化学习任务环境` | [🔗](./plan/setup-environment.md) | completed |
+| `实现强化学习算法` | [🔗](./plan/implement-actor-critic.md) | completed |
+| `MountainCar稀疏奖励收敛` | [🔗](./plan/mountaincar-convergence.md) | completed |
+| `Energy-Based 奖励塑形` | [🔗](./plan/energy-based-shaping.md) | completed |
+| `回合相对进度奖励塑形` | [🔗](./plan/episode-relative-progress.md) | completed |
+| `PPO 算法实现` | [🔗](./plan/implement-ppo.md) | completed |
+| `PPO 并行训练（多 k 对比）` | [🔗](./plan/ppo-parallel-training.md) | completed |
 
 ## TODO列表
 
@@ -68,10 +61,8 @@
 
 ## 全局更新日志（近5条）
 
-- `06-05 00:30`: PPO 并行训练计划制定——创建 request/ppo-parallel-training.md 和 plan/ppo-parallel-training.md，更新 index。
-- `06-05`: PPO 并行训练实现完成——config.py 新增 PPO_NUM_ENVS/POTENTIAL_K_START/POTENTIAL_K_INTERVAL，新建 ppo_parallel.py（独立脚本、train_single_agent worker、plot_comparison 双 subplot、自动选最优 k），wiki 记忆库更新。
-- `06-05 00:00`: Potential-Based 奖励塑形完成——config.py 移除 7 个进度塑形参数，新增 POTENTIAL_K=1；ppo_agent.py/agent.py 塑形逻辑替换为 `reward + k(γ·pos' - pos)`，极简势函数 Φ=k·pos。
-- `06-04 23:55`: PPO 算法实现完成——创建 ppo_agent.py（自包含 PPO：GAE+dones 截断+advantage norm+entropy bonus），config.py AC/PPO 参数分离，wiki 记忆库更新。
-- `06-04 23:15`: 回合相对进度塑形完成——创建 request/plan/abstract，代码可运行但不收敛，推测 AC 算法局限。
-- `06-04 22:40`: Energy-Based 塑形执行完毕——创建 abstract、更新 index，config.py 新增 G/PE_COEFFICIENT，agent.py 替换公式。
-- `06-04 21:00`: MountainCar 收敛计划执行完毕——奖励塑形(Φ=|v|,C=10) + ε-greedy(0.3→0.01,decay=0.999)，训练增加塑性奖励显示。
+- `06-05`: PPO 设备配置——config.py 新增 PPO_USE_GPU，ppo_agent/ppo_parallel 统一读取配置。
+- `06-05`: PPO 并行训练完成——ppo_parallel.py 多进程多 k 对比，自动选最优，双 subplot 可视化。
+- `06-05`: Potential-Based 塑形——Φ=k·pos 极简势函数（当前方案），Ng et al. 定理保证策略不变性。
+- `06-04`: PPO 算法实现——ppo_agent.py (GAE + advantage norm + entropy bonus)，替代 AC。
+- `06-04`: 奖励塑形探索——Velocity→Energy→Progress 三次尝试均不收敛，详见笔记。
