@@ -1,4 +1,7 @@
 import os
+import sys
+from datetime import datetime
+
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -8,7 +11,8 @@ from tqdm import tqdm
 from config import (
     PPO_HIDDEN_DIM, PPO_ACTOR_LR, PPO_CRITIC_LR, PPO_GAMMA,
     PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_NUM_EPISODES, PPO_EVAL_INTERVAL,
-    PPO_ENTROPY_COEF, PPO_USE_GPU, POTENTIAL_K,
+    PPO_ENTROPY_COEF, PPO_USE_GPU, PPO_RETRAIN_NUM_EPISODES,
+    PPO_ACTOR_MODEL_PATH, PPO_CRITIC_MODEL_PATH, POTENTIAL_K,
 )
 from env import make_env
 
@@ -121,8 +125,8 @@ def evaluate(env, agent):
     return episode_return
 
 
-def train_on_policy_agent(env, agent, num_episodes):
-    os.makedirs("results/models", exist_ok=True)
+def train_on_policy_agent(env, agent, num_episodes, results_dir="results"):
+    os.makedirs(os.path.join(results_dir, "models"), exist_ok=True)
     return_list = []
     shaped_return_list = []
     max_pos_list = []
@@ -159,13 +163,13 @@ def train_on_policy_agent(env, agent, num_episodes):
 
         if shaped_episode_return > best_shaped_return:
             best_shaped_return = shaped_episode_return
-            torch.save(agent.actor.state_dict(), "results/models/ppo_actor_best.pth")
-            torch.save(agent.critic.state_dict(), "results/models/ppo_critic_best.pth")
+            torch.save(agent.actor.state_dict(), os.path.join(results_dir, "models", "ppo_actor_best.pth"))
+            torch.save(agent.critic.state_dict(), os.path.join(results_dir, "models", "ppo_critic_best.pth"))
 
         if max_position >= 0.5:
             tqdm.write(f'[Cleared! Episode {i_episode}] max_position={max_position:.3f}')
-            torch.save(agent.actor.state_dict(), "results/models/ppo_actor_cleared.pth")
-            torch.save(agent.critic.state_dict(), "results/models/ppo_critic_cleared.pth")
+            torch.save(agent.actor.state_dict(), os.path.join(results_dir, "models", "ppo_actor_cleared.pth"))
+            torch.save(agent.critic.state_dict(), os.path.join(results_dir, "models", "ppo_critic_cleared.pth"))
 
         if i_episode % 10 == 0:
             recent_avg = np.mean(return_list[-10:])
@@ -194,7 +198,7 @@ def train_on_policy_agent(env, agent, num_episodes):
     return return_list, shaped_return_list
 
 
-def plot_return(return_list, shaped_return_list):
+def plot_return(return_list, shaped_return_list, results_dir="results"):
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
 
     mv = moving_average(return_list, 9)
@@ -214,8 +218,8 @@ def plot_return(return_list, shaped_return_list):
     ax2.legend()
 
     plt.tight_layout()
-    os.makedirs("results/imgs", exist_ok=True)
-    fig.savefig("results/imgs/ppo_training_results.png", dpi=150)
+    os.makedirs(os.path.join(results_dir, "imgs"), exist_ok=True)
+    fig.savefig(os.path.join(results_dir, "imgs", "ppo_training_results.png"), dpi=150)
     plt.show()
 
 
@@ -230,12 +234,30 @@ def main():
     agent = PPO(state_dim, PPO_HIDDEN_DIM, action_dim, PPO_ACTOR_LR, PPO_CRITIC_LR,
                 PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_GAMMA, PPO_ENTROPY_COEF, device)
 
+    has_actor_path = bool(PPO_ACTOR_MODEL_PATH)
+    has_critic_path = bool(PPO_CRITIC_MODEL_PATH)
+
+    if has_actor_path and has_critic_path:
+        results_dir = f"results/retrain_{datetime.now():%Y%m%d_%H%M%S}"
+        print(f"[Retrain] Loading actor from: {PPO_ACTOR_MODEL_PATH}")
+        agent.actor.load_state_dict(torch.load(PPO_ACTOR_MODEL_PATH, map_location=device))
+        print(f"[Retrain] Loading critic from: {PPO_CRITIC_MODEL_PATH}")
+        agent.critic.load_state_dict(torch.load(PPO_CRITIC_MODEL_PATH, map_location=device))
+        print(f"[Retrain] Results will be saved to: {results_dir}/")
+        num_episodes = PPO_RETRAIN_NUM_EPISODES
+    elif has_actor_path != has_critic_path:
+        print("[Error] PPO_ACTOR_MODEL_PATH and PPO_CRITIC_MODEL_PATH must both be empty or both non-empty.")
+        sys.exit(1)
+    else:
+        results_dir = "results"
+        num_episodes = PPO_NUM_EPISODES
+
     return_list, shaped_return_list = train_on_policy_agent(
-        env, agent, PPO_NUM_EPISODES,
+        env, agent, num_episodes, results_dir,
     )
     env.close()
 
-    plot_return(return_list, shaped_return_list)
+    plot_return(return_list, shaped_return_list, results_dir)
 
 
 if __name__ == "__main__":

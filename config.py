@@ -31,6 +31,11 @@ PPO_ENTROPY_COEF = 0.05               # 熵正则化系数
 PPO_USE_GPU = False                  # 是否使用 GPU 训练（True=cuda, False=cpu）
 PPO_INFERENCE_EPISODES = 3           # 推理录制时运行的 episode 数
 
+# --- PPO 再训练 ---
+PPO_ACTOR_MODEL_PATH = "results/models/1/ppo_actor_best.pth"            # 为空则从头训练；非空则加载指定路径的actor权重进行再训练
+PPO_CRITIC_MODEL_PATH = "results/models/1/ppo_critic_best.pth"           # 为空则从头训练；非空则加载指定路径的critic权重进行再训练
+PPO_RETRAIN_NUM_EPISODES = 10000      # 再训练时的 episode 数
+
 # ==================== 奖励塑形（两个算法共用） ====================
 
 # --- Potential-Based 奖励塑形 ---

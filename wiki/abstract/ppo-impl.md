@@ -8,7 +8,7 @@ dependencies:
   - "wiki/request/implement-ppo.md"
   - "wiki/plan/implement-ppo.md"
 created_at: 2026-06-04 23:50:00
-updated_at: 2026-06-05
+updated_at: 2026-06-05 18:45:00
 ---
 # 摘要：PPO 算法实现
 
@@ -21,12 +21,13 @@ updated_at: 2026-06-05
 - AC/PPO 训练参数完全分离（config.py 中独立前缀），奖励塑形参数共享
 - ppo_agent.py 自包含，与 agent.py 零耦合
 - `PPO_USE_GPU=False` 控制训练设备（True=cuda, False=cpu），默认 CPU，移除自动检测
+- **PPO 再训练**：通过 config.py 中 `PPO_ACTOR_MODEL_PATH` / `PPO_CRITIC_MODEL_PATH` 指定已有权重文件进行再训练，仅恢复 state_dict（optimizer 重新初始化），输出到时间戳目录 `results/retrain_YYYYMMDD_HHMMSS/`。再训练 episode 数由 `PPO_RETRAIN_NUM_EPISODES` 独立控制。仅 `ppo_agent.py` 支持，不涉及 `ppo_parallel.py`。
 
 ## 内容概述
 
 > `ppo_agent.py` 包含完整的 PPO 实现：PolicyNet/ValueNet、compute_gae（含 dones 截断）、PPO 类（clipped objective + advantage norm + entropy bonus）、on-policy 训练循环（复用 episode-relative progress 奖励塑形）、moving_average/evaluate/plot_return 工具函数、main 入口。
 >
-> `config.py` 新增 PPO_ 前缀参数组（PPO_HIDDEN_DIM=256, PPO_GAMMA=0.98, PPO_LMBDA=0.95, PPO_EPOCHS=10, PPO_EPS=0.2, PPO_NUM_EPISODES=5000, PPO_EVAL_INTERVAL=200, PPO_ENTROPY_COEF=0.01, PPO_USE_GPU=False），与 AC 参数分节管理。
+> `config.py` 新增 PPO_ 前缀参数组（PPO_HIDDEN_DIM=256, PPO_GAMMA=0.98, PPO_LMBDA=0.95, PPO_EPOCHS=10, PPO_EPS=0.2, PPO_NUM_EPISODES=5000, PPO_EVAL_INTERVAL=200, PPO_ENTROPY_COEF=0.01, PPO_USE_GPU=False, PPO_RETRAIN_NUM_EPISODES=5000），与 AC 参数分节管理。再训练配置项：PPO_ACTOR_MODEL_PATH、PPO_CRITIC_MODEL_PATH（空字符串=从头训练，非空=加载权重再训练），两个路径必须同时为空或同时非空。
 
 ## 关键设计决策
 

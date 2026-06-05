@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-05 17:00:00
+> 🔄 最后同步：2026-06-05 18:30:00
 
 ## 模块总览
 
@@ -31,6 +31,7 @@
 | `PPO 并行训练需求` | [🔗](./request/ppo-parallel-training.md) | completed | `PPO 并行训练（多 k 对比）`（已完成） |
 | `PPO 设备配置需求` | [🔗](./request/ppo-device-config.md) | completed | — |
 | `PPO 训练增强需求` | [🔗](./request/ppo-training-enhancement.md) | completed | `PPO 训练增强`（已完成） |
+| `PPO 再训练需求` | [🔗](./request/ppo-retraining.md) | completed | `PPO 再训练功能`（已完成） |
 
 ## 计划列表
 
@@ -44,11 +45,13 @@
 | `PPO 算法实现` | [🔗](./plan/implement-ppo.md) | completed |
 | `PPO 并行训练（多 k 对比）` | [🔗](./plan/ppo-parallel-training.md) | completed |
 | `PPO 训练增强` | [🔗](./plan/ppo-training-enhancement.md) | completed |
+| `PPO 再训练功能` | [🔗](./plan/ppo-retraining.md) | completed |
 
 ## TODO列表
 
 - [x] 执行`PPO 并行训练`计划。
 - [x] 执行`PPO 训练增强`计划。
+- [x] 执行`PPO 再训练功能`计划。
 
 ## 笔记
 
@@ -65,6 +68,8 @@
 
 ## 全局更新日志（近5条）
 
+- `06-05 18:45`: PPO 再训练功能完成——config.py 新增 PPO_ACTOR_MODEL_PATH/PPO_CRITIC_MODEL_PATH/PPO_RETRAIN_NUM_EPISODES；ppo_agent.py main() 增加再训练模式判断、权重加载、时间戳目录；train_on_policy_agent/plot_return 增加 results_dir 参数。
+- `06-05`: PPO 再训练计划已制定——config.py 新增双路径配置，ppo_agent.py 支持加载权重继续训练，时间戳输出目录。
 - `06-05`: PPO 训练增强完成——最优模型保存(shaped return + cleared) + 通关检测 + savefig + run_ppo_agent.py 推理录制。
 - `06-05`: PPO 训练增强计划制定——模型保存 + 通关检测(>=0.5) + 图保存到 results/imgs/ + 推理录制 mp4。
 - `06-05`: PPO 设备配置——config.py 新增 PPO_USE_GPU，ppo_agent/ppo_parallel 统一读取配置。
