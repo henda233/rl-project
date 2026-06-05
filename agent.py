@@ -7,9 +7,7 @@ from tqdm import tqdm
 from config import (
     HIDDEN_DIM, ACTOR_LR, CRITIC_LR, GAMMA,
     NUM_EPISODES, EVAL_INTERVAL,
-    PROGRESS_RIGHT_SCALE, PROGRESS_LEFT_SCALE,
-    SPEED_REWARD_SCALE, SPEED_THRESHOLD, STAGNATION_PENALTY,
-    NEAR_GOAL_THRESHOLD, NEAR_GOAL_PENALTY,
+    POTENTIAL_K,
     EPSILON, EPSILON_DECAY, EPSILON_MIN,
 )
 from env import make_env
@@ -115,25 +113,11 @@ def train_on_policy_agent(env, agent, num_episodes, epsilon):
         }
         obs, info = env.reset()
         done = False
-        min_x = obs[0]
-        max_x = obs[0]
         while not done:
             action = agent.take_action(obs, epsilon)
             next_obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
-            x = next_obs[0]
-            speed = next_obs[1]
-            shaped_reward = reward
-            if x > max_x:
-                shaped_reward += (x - max_x) * PROGRESS_RIGHT_SCALE
-                max_x = x
-            elif x < min_x:
-                shaped_reward += (min_x - x) * PROGRESS_LEFT_SCALE
-                min_x = x
-            if abs(speed) > SPEED_THRESHOLD:
-                shaped_reward += abs(speed) * SPEED_REWARD_SCALE
-            else:
-                shaped_reward -= STAGNATION_PENALTY
+            shaped_reward = reward + POTENTIAL_K * (GAMMA * next_obs[0] - obs[0])
             transition_dict['states'].append(obs)
             transition_dict['actions'].append(action)
             transition_dict['next_states'].append(next_obs)
@@ -142,9 +126,6 @@ def train_on_policy_agent(env, agent, num_episodes, epsilon):
             obs = next_obs
             episode_return += reward
             shaped_episode_return += shaped_reward
-        if truncated and next_obs[0] > NEAR_GOAL_THRESHOLD:
-            transition_dict['rewards'][-1] -= NEAR_GOAL_PENALTY
-            shaped_episode_return -= NEAR_GOAL_PENALTY
         return_list.append(episode_return)
         shaped_return_list.append(shaped_episode_return)
         agent.update(transition_dict)

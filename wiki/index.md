@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-04 23:55:00
+> 🔄 最后同步：2026-06-05 00:00:00
 
 ## 模块总览
 
@@ -22,6 +22,7 @@
 | `Energy-Based 塑形实现` | [🔗](../wiki/abstract/energy-based-shaping.md) | 势函数公式、最终超参数、改动范围与不改动部分 | ✅ 无循环依赖 | 06-04 |
 | `回合相对进度塑形` | [🔗](../wiki/abstract/episode-relative-progress.md) | 追踪 max_x/min_x 打破记录奖励 + 速度信号 + 近终点惩罚，替换 energy-based | ✅ 无循环依赖 | 06-04 |
 | `PPO算法实现` | [🔗](../wiki/abstract/ppo-impl.md) | PPO（GAE+dones截断+advantage norm+entropy bonus）替代 AC，ppo_agent.py 自包含 | ✅ 无循环依赖 | 06-04 |
+| `Potential-Based 塑形` | [🔗](../wiki/abstract/potential-based-shaping.md) | Φ=k·pos，极简势函数，替换回合相对进度塑形，Ng et al. 定理保证 | ✅ 无循环依赖 | 06-05 |
 
 ## 需求列表
 
@@ -54,18 +55,17 @@
 - **API 适配要点**：参考代码 `examples/` 使用旧版 gym API，所有代码需使用 gymnasium API（`step` 返回 5 值，`reset(seed=...)`，`done = terminated or truncated`）。
 - **虚拟环境**：使用 `uv venv` / `uv pip` / `uv run python` 管理。
 - **MountainCar 稀疏奖励收敛问题**（2026-06-04）：on-policy Actor-Critic 在 MountainCar-v0 上 1500 episode return 仍为 -200。每步奖励恒为 -1，智能体无法获得正向反馈引导探索。
-- **三次奖励塑形尝试均不收敛**（2026-06-04）：
-  - Velocity-based (Φ=|v|,C=10)：速度评价是位置盲的，撞墙蓄力阶段速度突降会惩罚关键行为，γ<1 泄漏使净贡献为负。
-  - Energy-Based (Φ=sin(3·pos)+v²/(2g),C=10)：sin(3·pos) 在关键路径非单调（-1.2→-0.5 段从 +0.44 跌至 -1.0），势函数设计过于复杂。
-  - 回合相对进度（记录打破 + 速度 + 近终点惩罚）：代码可运行，5000 episode 仍不收敛。
-  - **结论**：根因不是奖励塑形，而是 AC 算法本身局限性。后续方向：调整网络结构（HIDDEN_DIM、层数）、尝试 DQN+经验回放、调整 GAMMA/LR 等超参数。
+- **四次奖励塑形尝试**（2026-06-05 更新）：
+  - Velocity-based (Φ=|v|,C=10)：速度盲，撞墙蓄力阶段惩罚关键行为，γ<1 泄漏使净贡献为负。
+  - Energy-Based (Φ=sin(3·pos)+v²/(2g),C=10)：sin(3·pos) 非单调，设计过于复杂。
+  - 回合相对进度（记录打破 + 速度 + 近终点惩罚）：非势能塑形，5000 episode 仍不收敛。
+  - **Potential-Based (Φ=k·pos)**（当前方案）：极简势函数，仅依赖位置，向右移动 ⇒ 正向塑形奖励，Ng et al. 定理保证策略不变性。k=1 默认，可通过 POTENTIAL_K 调整量级。
+  - **设计理念转变**：从"堆砌更多信号"转向"最简势函数"，让算法自身能力说话。
 
 ## 全局更新日志（近5条）
 
+- `06-05 00:00`: Potential-Based 奖励塑形完成——config.py 移除 7 个进度塑形参数，新增 POTENTIAL_K=1；ppo_agent.py/agent.py 塑形逻辑替换为 `reward + k(γ·pos' - pos)`，极简势函数 Φ=k·pos。
 - `06-04 23:55`: PPO 算法实现完成——创建 ppo_agent.py（自包含 PPO：GAE+dones 截断+advantage norm+entropy bonus），config.py AC/PPO 参数分离，wiki 记忆库更新。
-- `06-04 23:45`: PPO 需求与计划创建——新增 request/implement-ppo.md、plan/implement-ppo.md，等待用户确认计划后执行。
 - `06-04 23:15`: 回合相对进度塑形完成——创建 request/plan/abstract，代码可运行但不收敛，推测 AC 算法局限。
 - `06-04 22:40`: Energy-Based 塑形执行完毕——创建 abstract、更新 index，config.py 新增 G/PE_COEFFICIENT，agent.py 替换公式。
 - `06-04 21:00`: MountainCar 收敛计划执行完毕——奖励塑形(Φ=|v|,C=10) + ε-greedy(0.3→0.01,decay=0.999)，训练增加塑性奖励显示。
-- `06-04 20:00`: AC 算法实现完成——config.py 新增超参数、agent.py 创建（PolicyNet/ValueNet/ActorCritic/训练循环/绘图），稀疏奖励不收敛已知。
-- `06-04 18:36`: WIKI 记忆库初始化——创建 8 个摘要、1 个需求文档、index.md、readme.md。
