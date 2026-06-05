@@ -147,7 +147,7 @@ def train_on_policy_agent(env, agent, num_episodes, results_dir="results"):
             next_obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
             max_position = max(max_position, obs[0])
-            shaped_reward = reward + POTENTIAL_K * (PPO_GAMMA * next_obs[0] - obs[0])
+            shaped_reward = reward + POTENTIAL_K * (PPO_GAMMA * (next_obs[0] + 10 * abs(next_obs[1])) - (obs[0] + 10 * abs(obs[1])))
             transition_dict['states'].append(obs)
             transition_dict['actions'].append(action)
             transition_dict['next_states'].append(next_obs)

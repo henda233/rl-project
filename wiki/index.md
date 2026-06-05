@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-05 18:30:00
+> 🔄 最后同步：2026-06-05 19:00:00
 
 ## 模块总览
 
@@ -14,7 +14,7 @@
 | `环境搭建` | [🔗](./abstract/env-setup.md) | config.py + make_env() 工厂函数 | ✅ | 06-04 |
 | `AC 实现` | [🔗](./abstract/actor-critic-impl.md) / [计划](./plan/implement-actor-critic.md) | agent.py gymnasium 适配，已知稀疏奖励不收敛 | ✅ | 06-04 |
 | `奖励塑形探索` | [🔗](./plan/mountaincar-convergence.md) / [energy](./plan/energy-based-shaping.md) / [progress](./plan/episode-relative-progress.md) | Velocity→Energy→Progress 三次尝试均不收敛，详见笔记 | ✅ | 06-04 |
-| `Potential-Based 塑形` | [🔗](./abstract/potential-based-shaping.md) | Φ=k·pos 极简势函数（当前方案），Ng et al. 定理保证策略不变性 | ✅ | 06-05 |
+| `Potential-Based 塑形` | [🔗](./abstract/potential-based-shaping.md) | Φ=k·(pos+10·|v|)（PPO v2），Φ=k·pos（AC v1），Ng et al. 定理保证 | ✅ | 06-05 |
 | `PPO 算法` | [🔗](./abstract/ppo-impl.md) / [计划](./plan/implement-ppo.md) | GAE + advantage norm + entropy bonus，PPO_USE_GPU 控制设备 | ✅ | 06-05 |
 | `PPO 并行训练` | [🔗](./abstract/ppo-parallel-training.md) / [计划](./plan/ppo-parallel-training.md) | multiprocessing 多 k 对比，自动选最优，双 subplot 可视化 | ✅ | 06-05 |
 | `PPO 训练增强` | [计划](./plan/ppo-training-enhancement.md) / [需求](./request/ppo-training-enhancement.md) | 模型保存 + 通关检测(>=0.5) + 图保存 + 推理录制 mp4 | ✅ | 06-05 |
@@ -49,9 +49,7 @@
 
 ## TODO列表
 
-- [x] 执行`PPO 并行训练`计划。
-- [x] 执行`PPO 训练增强`计划。
-- [x] 执行`PPO 再训练功能`计划。
+- [ ] 
 
 ## 笔记
 
@@ -65,10 +63,11 @@
   - 回合相对进度（记录打破 + 速度 + 近终点惩罚）：非势能塑形，5000 episode 仍不收敛。
   - **Potential-Based (Φ=k·pos)**（当前方案）：极简势函数，仅依赖位置，向右移动 ⇒ 正向塑形奖励，Ng et al. 定理保证策略不变性。k=1 默认，可通过 POTENTIAL_K 调整量级。
   - **设计理念转变**：从"堆砌更多信号"转向"最简势函数"，让算法自身能力说话。
+  - **Potential-Based v2 (Φ=k·(pos+10·|v|))**（2026-06-05）：在 v1 基础上加入速度绝对值项。|v| 代表动能，乘 10 对齐量级。目标：加速收敛、降低收敛随机性。仅用于 PPO，AC 沿用 v1。
 
 ## 全局更新日志（近5条）
 
-- `06-05 18:45`: PPO 再训练功能完成——config.py 新增 PPO_ACTOR_MODEL_PATH/PPO_CRITIC_MODEL_PATH/PPO_RETRAIN_NUM_EPISODES；ppo_agent.py main() 增加再训练模式判断、权重加载、时间戳目录；train_on_policy_agent/plot_return 增加 results_dir 参数。
+- `06-05 19:00`: PPO 奖励塑形 v2——势函数改为 Φ=k·(pos+10·|v|)，速度项代表动能，乘 10 对齐量级。仅 ppo_agent.py 修改一行塑形公式。
 - `06-05`: PPO 再训练计划已制定——config.py 新增双路径配置，ppo_agent.py 支持加载权重继续训练，时间戳输出目录。
 - `06-05`: PPO 训练增强完成——最优模型保存(shaped return + cleared) + 通关检测 + savefig + run_ppo_agent.py 推理录制。
 - `06-05`: PPO 训练增强计划制定——模型保存 + 通关检测(>=0.5) + 图保存到 results/imgs/ + 推理录制 mp4。
