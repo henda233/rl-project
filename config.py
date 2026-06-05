@@ -36,6 +36,16 @@ PPO_ACTOR_MODEL_PATH = ""            # 为空则从头训练；非空则加载�
 PPO_CRITIC_MODEL_PATH = ""           # 为空则从头训练；非空则加载指定路径的critic权重进行再训练
 PPO_RETRAIN_NUM_EPISODES = 10000      # 再训练时的 episode 数
 
+# ==================== RND 配置（ppo_rnd_agent.py 使用） ====================
+
+RND_HIDDEN_DIM = 128                   # RND 隐藏层维度
+RND_OUTPUT_DIM = 256                   # 目标/预测网络输出维度（随机投影维度）
+RND_LR = 1e-3                          # RND 预测网络学习率
+RND_BETA = 100                         # 内在奖励系数（β）
+RND_EPOCHS = 5                        # 预测网络每批数据训练轮数
+RND_NUM_EPISODES = 10000               # RND 训练总 episode 数
+RND_BUFFER_SIZE = 5                    # 状态滑动缓冲区大小（保留最近 N 个 episode 的状态）
+
 # ==================== 奖励塑形（两个算法共用） ====================
 
 # --- Potential-Based 奖励塑形 ---

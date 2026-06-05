@@ -1,6 +1,6 @@
 import os
-import sys
 from datetime import datetime
+from collections import deque
 
 import torch
 import torch.nn.functional as F
@@ -10,9 +10,10 @@ from tqdm import tqdm
 
 from config import (
     PPO_HIDDEN_DIM, PPO_ACTOR_LR, PPO_CRITIC_LR, PPO_GAMMA,
-    PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_NUM_EPISODES, PPO_EVAL_INTERVAL,
-    PPO_ENTROPY_COEF, PPO_USE_GPU, PPO_RETRAIN_NUM_EPISODES,
-    PPO_ACTOR_MODEL_PATH, PPO_CRITIC_MODEL_PATH, POTENTIAL_K,
+    PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_EVAL_INTERVAL,
+    PPO_ENTROPY_COEF, PPO_USE_GPU,
+    RND_HIDDEN_DIM, RND_OUTPUT_DIM, RND_LR, RND_BETA, RND_EPOCHS,
+    RND_NUM_EPISODES, RND_BUFFER_SIZE,
 )
 from env import make_env
 
@@ -37,6 +38,69 @@ class ValueNet(torch.nn.Module):
     def forward(self, x):
         x = F.relu(self.fc1(x))
         return self.fc2(x)
+
+
+class RNDTargetNet(torch.nn.Module):
+    def __init__(self, state_dim, hidden_dim, output_dim):
+        super().__init__()
+        self.fc1 = torch.nn.Linear(state_dim, hidden_dim)
+        self.fc2 = torch.nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        return self.fc2(x)
+
+
+class RNDPredictorNet(torch.nn.Module):
+    def __init__(self, state_dim, hidden_dim, output_dim):
+        super().__init__()
+        self.fc1 = torch.nn.Linear(state_dim, hidden_dim)
+        self.fc2 = torch.nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        return self.fc2(x)
+
+
+class RNDModule:
+    def __init__(self, state_dim, hidden_dim, output_dim, lr, device):
+        self.target = RNDTargetNet(state_dim, hidden_dim, output_dim).to(device)
+        self.predictor = RNDPredictorNet(state_dim, hidden_dim, output_dim).to(device)
+        for p in self.target.parameters():
+            p.requires_grad = False
+        self.optimizer = torch.optim.Adam(self.predictor.parameters(), lr=lr)
+        self.device = device
+        self.running_std = 1.0
+        self.update_count = 0
+
+    def get_intrinsic_reward(self, states):
+        states_tensor = torch.tensor(np.array(states), dtype=torch.float).to(self.device)
+        with torch.no_grad():
+            target_out = self.target(states_tensor)
+            pred_out = self.predictor(states_tensor)
+            mse = torch.mean((pred_out - target_out) ** 2, dim=1)
+        return mse.cpu().numpy()
+
+    def normalize(self, r_int):
+        return r_int / (self.running_std + 1e-8)
+
+    def update(self, states, epochs):
+        states_tensor = torch.tensor(np.array(states), dtype=torch.float).to(self.device)
+        with torch.no_grad():
+            target_out = self.target(states_tensor)
+        for _ in range(epochs):
+            pred_out = self.predictor(states_tensor)
+            loss = F.mse_loss(pred_out, target_out)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+        with torch.no_grad():
+            pred_out = self.predictor(states_tensor)
+            mse = torch.mean((pred_out - target_out) ** 2, dim=1)
+            batch_std = mse.std().item()
+        self.update_count += 1
+        alpha = 1.0 / (self.update_count + 1)
+        self.running_std = (1 - alpha) * self.running_std + alpha * batch_std
 
 
 def compute_gae(gamma, lmbda, td_delta, dones):
@@ -125,16 +189,18 @@ def evaluate(env, agent):
     return episode_return
 
 
-def train_on_policy_agent(env, agent, num_episodes, results_dir="results"):
+def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
     os.makedirs(os.path.join(results_dir, "models"), exist_ok=True)
-    return_list = []
-    shaped_return_list = []
+    state_buffer = deque(maxlen=RND_BUFFER_SIZE)
+    total_return_list = []
+    original_return_list = []
     max_pos_list = []
-    best_shaped_return = -float('inf')
-    pbar = tqdm(range(1, num_episodes + 1), desc='Training PPO')
+    best_total_return = -float('inf')
+
+    pbar = tqdm(range(1, num_episodes + 1), desc='Training RND+PPO')
     for i_episode in pbar:
-        episode_return = 0
-        shaped_episode_return = 0
+        episode_original_return = 0
+        episode_total_return = 0
         max_position = 0
         transition_dict = {
             'states': [], 'actions': [], 'next_states': [],
@@ -143,83 +209,106 @@ def train_on_policy_agent(env, agent, num_episodes, results_dir="results"):
         obs, info = env.reset()
         done = False
         while not done:
-            action = agent.take_action(obs)
+            action = ppo.take_action(obs)
             next_obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
             max_position = max(max_position, obs[0])
-            shaped_reward = reward + POTENTIAL_K * (PPO_GAMMA * (next_obs[0] + 10 * abs(next_obs[1])) - (obs[0] + 10 * abs(obs[1])))
             transition_dict['states'].append(obs)
             transition_dict['actions'].append(action)
             transition_dict['next_states'].append(next_obs)
-            transition_dict['rewards'].append(shaped_reward)
             transition_dict['dones'].append(done)
             obs = next_obs
-            episode_return += reward
-            shaped_episode_return += shaped_reward
-        return_list.append(episode_return)
-        shaped_return_list.append(shaped_episode_return)
-        max_pos_list.append(max_position)
-        agent.update(transition_dict)
+            episode_original_return += reward
 
-        if shaped_episode_return > best_shaped_return:
-            best_shaped_return = shaped_episode_return
-            torch.save(agent.actor.state_dict(), os.path.join(results_dir, "models", "ppo_actor_best.pth"))
-            torch.save(agent.critic.state_dict(), os.path.join(results_dir, "models", "ppo_critic_best.pth"))
+        # RND intrinsic rewards
+        episode_states = transition_dict['states']
+        r_int = rnd.get_intrinsic_reward(episode_states)
+        r_int_norm = rnd.normalize(r_int)
+
+        # Combine rewards: r_total = r_ext + β * r_int_norm
+        r_ext = np.full(len(episode_states), -1.0)  # MountainCar: -1 per step
+        r_total = r_ext + RND_BETA * r_int_norm
+
+        episode_total_return = r_total.sum()
+
+        # Replace rewards in transition dict with combined rewards for GAE
+        transition_dict['rewards'] = r_total.tolist()
+
+        transition_dict['states'] = episode_states
+        transition_dict['next_states'] = transition_dict['next_states']
+        transition_dict['actions'] = transition_dict['actions']
+        transition_dict['dones'] = transition_dict['dones']
+
+        ppo.update(transition_dict)
+
+        # Add episode states to buffer, train RND
+        state_buffer.append(episode_states)
+        all_buffer_states = np.concatenate(list(state_buffer))
+        rnd.update(all_buffer_states, RND_EPOCHS)
+
+        total_return_list.append(episode_total_return)
+        original_return_list.append(episode_original_return)
+        max_pos_list.append(max_position)
+
+        if episode_total_return > best_total_return:
+            best_total_return = episode_total_return
+            torch.save(ppo.actor.state_dict(), os.path.join(results_dir, "models", "rnd_ppo_actor_best.pth"))
+            torch.save(ppo.critic.state_dict(), os.path.join(results_dir, "models", "rnd_ppo_critic_best.pth"))
 
         if max_position >= 0.5:
             tqdm.write(f'[Cleared! Episode {i_episode}] max_position={max_position:.3f}')
-            torch.save(agent.actor.state_dict(), os.path.join(results_dir, "models", "ppo_actor_cleared.pth"))
-            torch.save(agent.critic.state_dict(), os.path.join(results_dir, "models", "ppo_critic_cleared.pth"))
+            torch.save(ppo.actor.state_dict(), os.path.join(results_dir, "models", "rnd_ppo_actor_cleared.pth"))
+            torch.save(ppo.critic.state_dict(), os.path.join(results_dir, "models", "rnd_ppo_critic_cleared.pth"))
 
         if i_episode % 10 == 0:
-            recent_avg = np.mean(return_list[-10:])
-            shaped_recent_avg = np.mean(shaped_return_list[-10:])
+            recent_total = np.mean(total_return_list[-10:])
+            recent_original = np.mean(original_return_list[-10:])
             recent_max_pos = np.mean(max_pos_list[-10:])
             pbar.set_postfix({
-                'return': f'{recent_avg:.1f}',
-                'shaped': f'{shaped_recent_avg:.1f}',
-                'max_pos': f'{recent_max_pos:.3f}',
+                'tot': f'{recent_total:.1f}',
+                'orig': f'{recent_original:.1f}',
+                'pos': f'{recent_max_pos:.3f}',
             })
             tqdm.write(
                 f'[Episode {i_episode}] '
-                f'return(original): {recent_avg:.1f}, '
-                f'return(shaped): {shaped_recent_avg:.1f}, '
+                f'total_return: {recent_total:.1f}, '
+                f'original_return: {recent_original:.1f}, '
                 f'max_pos: {recent_max_pos:.3f}'
             )
 
         if i_episode % PPO_EVAL_INTERVAL == 0:
             eval_env = make_env(render_mode="human")
-            eval_return = evaluate(eval_env, agent)
+            eval_return = evaluate(eval_env, ppo)
             eval_env.close()
             tqdm.write(
                 f'[Eval  episode {i_episode}] return: {eval_return:.1f}'
             )
 
-    return return_list, shaped_return_list
+    return total_return_list, original_return_list
 
 
-def plot_return(return_list, shaped_return_list, results_dir="results"):
+def plot_return(total_return_list, original_return_list, results_dir):
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
 
-    mv = moving_average(return_list, 9)
-    ax1.plot(return_list, alpha=0.4, color='steelblue', label='episode return')
+    mv = moving_average(original_return_list, 9)
+    ax1.plot(original_return_list, alpha=0.4, color='steelblue', label='episode return')
     ax1.plot(mv, color='steelblue', label='moving avg (9)')
     ax1.set_xlabel('Episode')
     ax1.set_ylabel('Return (original)')
-    ax1.set_title('PPO on MountainCar-v0 (Original Reward)')
+    ax1.set_title('RND+PPO on MountainCar-v0 (Original Reward)')
     ax1.legend()
 
-    mv2 = moving_average(shaped_return_list, 9)
-    ax2.plot(shaped_return_list, alpha=0.4, color='darkorange', label='shaped episode return')
+    mv2 = moving_average(total_return_list, 9)
+    ax2.plot(total_return_list, alpha=0.4, color='darkorange', label='total episode return')
     ax2.plot(mv2, color='darkorange', label='moving avg (9)')
     ax2.set_xlabel('Episode')
-    ax2.set_ylabel('Return (shaped)')
-    ax2.set_title('PPO on MountainCar-v0 (Shaped Reward)')
+    ax2.set_ylabel('Return (total = ext + beta*r_int)')
+    ax2.set_title('RND+PPO on MountainCar-v0 (Total Reward)')
     ax2.legend()
 
     plt.tight_layout()
     os.makedirs(os.path.join(results_dir, "imgs"), exist_ok=True)
-    fig.savefig(os.path.join(results_dir, "imgs", "ppo_training_results.png"), dpi=150)
+    fig.savefig(os.path.join(results_dir, "imgs", "rnd_ppo_training_results.png"), dpi=150)
     plt.show()
 
 
@@ -231,33 +320,21 @@ def main():
 
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
-    agent = PPO(state_dim, PPO_HIDDEN_DIM, action_dim, PPO_ACTOR_LR, PPO_CRITIC_LR,
-                PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_GAMMA, PPO_ENTROPY_COEF, device)
 
-    has_actor_path = bool(PPO_ACTOR_MODEL_PATH)
-    has_critic_path = bool(PPO_CRITIC_MODEL_PATH)
+    ppo = PPO(state_dim, PPO_HIDDEN_DIM, action_dim, PPO_ACTOR_LR, PPO_CRITIC_LR,
+              PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_GAMMA, PPO_ENTROPY_COEF, device)
 
-    if has_actor_path and has_critic_path:
-        results_dir = f"results/retrain_{datetime.now():%Y%m%d_%H%M%S}"
-        print(f"[Retrain] Loading actor from: {PPO_ACTOR_MODEL_PATH}")
-        agent.actor.load_state_dict(torch.load(PPO_ACTOR_MODEL_PATH, map_location=device))
-        print(f"[Retrain] Loading critic from: {PPO_CRITIC_MODEL_PATH}")
-        agent.critic.load_state_dict(torch.load(PPO_CRITIC_MODEL_PATH, map_location=device))
-        print(f"[Retrain] Results will be saved to: {results_dir}/")
-        num_episodes = PPO_RETRAIN_NUM_EPISODES
-    elif has_actor_path != has_critic_path:
-        print("[Error] PPO_ACTOR_MODEL_PATH and PPO_CRITIC_MODEL_PATH must both be empty or both non-empty.")
-        sys.exit(1)
-    else:
-        results_dir = f"results/train_{datetime.now():%Y%m%d_%H%M%S}"
-        num_episodes = PPO_NUM_EPISODES
+    rnd = RNDModule(state_dim, RND_HIDDEN_DIM, RND_OUTPUT_DIM, RND_LR, device)
 
-    return_list, shaped_return_list = train_on_policy_agent(
-        env, agent, num_episodes, results_dir,
+    results_dir = f"results/rnd_{datetime.now():%Y%m%d_%H%M%S}"
+    print(f"[RND+PPO] Results will be saved to: {results_dir}/")
+
+    total_return_list, original_return_list = train_rnd_ppo(
+        env, ppo, rnd, RND_NUM_EPISODES, results_dir,
     )
     env.close()
 
-    plot_return(return_list, shaped_return_list, results_dir)
+    plot_return(total_return_list, original_return_list, results_dir)
 
 
 if __name__ == "__main__":

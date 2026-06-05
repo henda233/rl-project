@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-05 19:00:00
+> 🔄 最后同步：2026-06-05 20:00:00
 
 ## 模块总览
 
@@ -18,6 +18,7 @@
 | `PPO 算法` | [🔗](./abstract/ppo-impl.md) / [计划](./plan/implement-ppo.md) | GAE + advantage norm + entropy bonus，PPO_USE_GPU 控制设备 | ✅ | 06-05 |
 | `PPO 并行训练` | [🔗](./abstract/ppo-parallel-training.md) / [计划](./plan/ppo-parallel-training.md) | multiprocessing 多 k 对比，自动选最优，双 subplot 可视化 | ✅ | 06-05 |
 | `PPO 训练增强` | [计划](./plan/ppo-training-enhancement.md) / [需求](./request/ppo-training-enhancement.md) | 模型保存 + 通关检测(>=0.5) + 图保存 + 推理录制 mp4 | ✅ | 06-05 |
+| `RND 探索算法` | [🔗](./abstract/rnd-impl.md) / [计划](./plan/implement-rnd.md) | PPO + RND 替代势能塑形，滑动缓冲区 + 内在奖励驱动探索 | ✅ | 06-05 |
 
 ## 需求列表
 
@@ -32,6 +33,7 @@
 | `PPO 设备配置需求` | [🔗](./request/ppo-device-config.md) | completed | — |
 | `PPO 训练增强需求` | [🔗](./request/ppo-training-enhancement.md) | completed | `PPO 训练增强`（已完成） |
 | `PPO 再训练需求` | [🔗](./request/ppo-retraining.md) | completed | `PPO 再训练功能`（已完成） |
+| `RND 探索算法需求` | [🔗](./request/rnd-implementation.md) | completed | `PPO + RND 探索算法`（已完成） |
 
 ## 计划列表
 
@@ -46,10 +48,11 @@
 | `PPO 并行训练（多 k 对比）` | [🔗](./plan/ppo-parallel-training.md) | completed |
 | `PPO 训练增强` | [🔗](./plan/ppo-training-enhancement.md) | completed |
 | `PPO 再训练功能` | [🔗](./plan/ppo-retraining.md) | completed |
+| `PPO + RND 探索算法` | [🔗](./plan/implement-rnd.md) | ✅ completed |
 
 ## TODO列表
 
-- [ ] 
+- [x] RND 探索算法实现（PPO + RND 替代势能塑形）
 
 ## 笔记
 
@@ -67,6 +70,8 @@
 
 ## 全局更新日志（近5条）
 
+- `06-05 20:00`: RND 探索算法实现完成——ppo_rnd_agent.py 创建（RNDTargetNet/PredictorNet/RNDModule + 滑动缓冲区 + PPO 训练循环），config.py 追加 RND_NUM_EPISODES/RND_BUFFER_SIZE，ppo_agent.py 从头训练改为时间戳目录。训练验证通过。
+- `06-05 19:30`: RND 探索算法计划制定——config.py 追加 RND 配置段，计划 `wiki/plan/implement-rnd.md` 创建，需求 `wiki/request/rnd-implementation.md` 创建。
 - `06-05 19:00`: PPO 奖励塑形 v2——势函数改为 Φ=k·(pos+10·|v|)，速度项代表动能，乘 10 对齐量级。仅 ppo_agent.py 修改一行塑形公式。
 - `06-05`: PPO 再训练计划已制定——config.py 新增双路径配置，ppo_agent.py 支持加载权重继续训练，时间戳输出目录。
 - `06-05`: PPO 训练增强完成——最优模型保存(shaped return + cleared) + 通关检测 + savefig + run_ppo_agent.py 推理录制。
