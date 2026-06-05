@@ -9,7 +9,7 @@ dependencies:
   - "wiki/request/rnd-implementation.md"
   - "wiki/plan/implement-rnd.md"
 created_at: 2026-06-05 20:00:00
-updated_at: 2026-06-05 20:00:00
+updated_at: 2026-06-05 21:00:00
 ---
 # 摘要：RND 探索算法实现
 
@@ -19,7 +19,7 @@ updated_at: 2026-06-05 20:00:00
 - 奖励公式：`r_total = r_ext + β · r_int_norm`，其中 `r_int_norm = r_int / (running_std + 1e-8)`（仅除标准差，不减均值）
 - 滑动缓冲区保留最近 `RND_BUFFER_SIZE` 个 episode 的状态，用于训练预测网络
 - ppo_agent.py 和 ppo_rnd_agent.py 完全独立，零耦合；ppo_agent.py 从头训练也改为时间戳目录
-- 最优模型按 total_return 保存，通关检测沿用 `max_position >= 0.5`
+- 最优模型按原始return（`episode_original_return`）保存，通关检测沿用 `max_position >= 0.5`
 
 ## 内容概述
 

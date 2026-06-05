@@ -195,7 +195,7 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
     total_return_list = []
     original_return_list = []
     max_pos_list = []
-    best_total_return = -float('inf')
+    best_original_return = -float('inf')
 
     pbar = tqdm(range(1, num_episodes + 1), desc='Training RND+PPO')
     for i_episode in pbar:
@@ -250,8 +250,8 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
         original_return_list.append(episode_original_return)
         max_pos_list.append(max_position)
 
-        if episode_total_return > best_total_return:
-            best_total_return = episode_total_return
+        if episode_original_return > best_original_return:
+            best_original_return = episode_original_return
             torch.save(ppo.actor.state_dict(), os.path.join(results_dir, "models", "rnd_ppo_actor_best.pth"))
             torch.save(ppo.critic.state_dict(), os.path.join(results_dir, "models", "rnd_ppo_critic_best.pth"))
 

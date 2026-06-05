@@ -130,7 +130,7 @@ def train_on_policy_agent(env, agent, num_episodes, results_dir="results"):
     return_list = []
     shaped_return_list = []
     max_pos_list = []
-    best_shaped_return = -float('inf')
+    best_original_return = -float('inf')
     pbar = tqdm(range(1, num_episodes + 1), desc='Training PPO')
     for i_episode in pbar:
         episode_return = 0
@@ -161,8 +161,8 @@ def train_on_policy_agent(env, agent, num_episodes, results_dir="results"):
         max_pos_list.append(max_position)
         agent.update(transition_dict)
 
-        if shaped_episode_return > best_shaped_return:
-            best_shaped_return = shaped_episode_return
+        if episode_return > best_original_return:
+            best_original_return = episode_return
             torch.save(agent.actor.state_dict(), os.path.join(results_dir, "models", "ppo_actor_best.pth"))
             torch.save(agent.critic.state_dict(), os.path.join(results_dir, "models", "ppo_critic_best.pth"))
 

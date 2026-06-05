@@ -16,7 +16,7 @@ created_at: 2026-06-05
 
 #### 1. 最优模型保存（`results/models/`）
 
-- 追踪标准 A：**塑形 return 最高** → `ppo_actor_best.pth` + `ppo_critic_best.pth`
+- 追踪标准 A：**原始 return 最高** → `ppo_actor_best.pth` + `ppo_critic_best.pth`
 - 追踪标准 B：**通关成功**（position >= 0.5）→ `ppo_actor_cleared.pth` + `ppo_critic_cleared.pth`
 - 格式：分开保存 actor/critic 各自的 state_dict
 
@@ -73,3 +73,4 @@ created_at: 2026-06-05
 
 - `2026-06-05`: 计划已生成，需求与用户讨论对齐完毕
 - `2026-06-05`: S1-S5 全部完成——config.py 新增 PPO_INFERENCE_EPISODES，ppo_agent.py 增加最优模型保存/通关检测/tqdm max_pos/savefig，根目录创建 run_ppo_agent.py 推理录制脚本
+- `2026-06-05 21:00`: 最优模型保存标准从塑形return改为原始return

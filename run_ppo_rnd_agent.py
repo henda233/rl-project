@@ -8,9 +8,9 @@ from config import (
     PPO_HIDDEN_DIM, PPO_ACTOR_LR, PPO_CRITIC_LR, PPO_GAMMA,
     PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_ENTROPY_COEF,
     PPO_INFERENCE_EPISODES, PPO_USE_GPU,
-    PPO_INFERENCE_ACTOR_PATH, PPO_INFERENCE_CRITIC_PATH,
+    RND_INFERENCE_ACTOR_PATH, RND_INFERENCE_CRITIC_PATH,
 )
-from ppo_agent import PPO
+from ppo_rnd_agent import PPO
 from env import make_env
 
 
@@ -29,8 +29,8 @@ def main():
     agent = PPO(state_dim, PPO_HIDDEN_DIM, action_dim, PPO_ACTOR_LR, PPO_CRITIC_LR,
                 PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_GAMMA, PPO_ENTROPY_COEF, device)
 
-    agent.actor.load_state_dict(torch.load(PPO_INFERENCE_ACTOR_PATH, map_location=device))
-    agent.critic.load_state_dict(torch.load(PPO_INFERENCE_CRITIC_PATH, map_location=device))
+    agent.actor.load_state_dict(torch.load(RND_INFERENCE_ACTOR_PATH, map_location=device))
+    agent.critic.load_state_dict(torch.load(RND_INFERENCE_CRITIC_PATH, map_location=device))
 
     for episode in range(PPO_INFERENCE_EPISODES):
         obs, info = env.reset()

@@ -36,6 +36,10 @@ PPO_ACTOR_MODEL_PATH = ""            # 为空则从头训练；非空则加载�
 PPO_CRITIC_MODEL_PATH = ""           # 为空则从头训练；非空则加载指定路径的critic权重进行再训练
 PPO_RETRAIN_NUM_EPISODES = 10000      # 再训练时的 episode 数
 
+# --- PPO 推理（run_ppo_agent.py 使用） ---
+PPO_INFERENCE_ACTOR_PATH = "results/models/ppo_actor_best.pth"   # 推理时加载的 Actor 权重路径
+PPO_INFERENCE_CRITIC_PATH = "results/models/ppo_critic_best.pth" # 推理时加载的 Critic 权重路径
+
 # ==================== RND 配置（ppo_rnd_agent.py 使用） ====================
 
 RND_HIDDEN_DIM = 128                   # RND 隐藏层维度
@@ -45,6 +49,10 @@ RND_BETA = 100                         # 内在奖励系数（β）
 RND_EPOCHS = 5                        # 预测网络每批数据训练轮数
 RND_NUM_EPISODES = 10000               # RND 训练总 episode 数
 RND_BUFFER_SIZE = 5                    # 状态滑动缓冲区大小（保留最近 N 个 episode 的状态）
+
+# --- RND 推理（run_ppo_rnd_agent.py 使用） ---
+RND_INFERENCE_ACTOR_PATH = "results/rnd_20260605_195308/models/rnd_ppo_actor_best.pth"          # 推理时加载的 Actor 权重路径（如 results/rnd_xxx/models/rnd_ppo_actor_cleared.pth）
+RND_INFERENCE_CRITIC_PATH = "results/rnd_20260605_195308/models/rnd_ppo_critic_best.pth"         # 推理时加载的 Critic 权重路径（如 results/rnd_xxx/models/rnd_ppo_critic_cleared.pth）
 
 # ==================== 奖励塑形（两个算法共用） ====================
 
