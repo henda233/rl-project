@@ -15,7 +15,7 @@ from config import (
     RND_HIDDEN_DIM, RND_OUTPUT_DIM, RND_LR, RND_BETA, RND_BETA_END, RND_BETA_DECAY, RND_EPOCHS,
     RND_NUM_EPISODES, RND_BUFFER_SIZE,
 )
-from env import make_env
+from env_digital_huarongdao import make_huarongdao_env
 
 
 class PolicyNet(torch.nn.Module):
@@ -194,7 +194,8 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
     state_buffer = deque(maxlen=RND_BUFFER_SIZE)
     total_return_list = []
     original_return_list = []
-    max_pos_list = []
+    placed_list = []
+    step_list = []
     best_original_return = -float('inf')
 
     current_beta = RND_BETA
@@ -202,7 +203,8 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
     for i_episode in pbar:
         episode_original_return = 0
         episode_total_return = 0
-        max_position = 0
+        max_placed = 0
+        episode_rewards = []
         transition_dict = {
             'states': [], 'actions': [], 'next_states': [],
             'rewards': [], 'dones': [],
@@ -213,7 +215,8 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
             action = ppo.take_action(obs)
             next_obs, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
-            max_position = max(max_position, obs[0])
+            max_placed = max(max_placed, info.get('placed_count', 0))
+            episode_rewards.append(reward)
             transition_dict['states'].append(obs)
             transition_dict['actions'].append(action)
             transition_dict['next_states'].append(next_obs)
@@ -227,7 +230,7 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
         r_int_norm = rnd.normalize(r_int)
 
         # Combine rewards: r_total = r_ext + β * r_int_norm
-        r_ext = np.full(len(episode_states), -1.0)  # MountainCar: -1 per step
+        r_ext = np.array(episode_rewards)
         r_total = r_ext + current_beta * r_int_norm
 
         episode_total_return = r_total.sum()
@@ -249,38 +252,42 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
 
         total_return_list.append(episode_total_return)
         original_return_list.append(episode_original_return)
-        max_pos_list.append(max_position)
+        placed_list.append(max_placed)
+        step_list.append(info.get('step_count', 0))
 
         if episode_original_return > best_original_return:
             best_original_return = episode_original_return
             torch.save(ppo.actor.state_dict(), os.path.join(results_dir, "models", "rnd_ppo_actor_best.pth"))
             torch.save(ppo.critic.state_dict(), os.path.join(results_dir, "models", "rnd_ppo_critic_best.pth"))
 
-        if max_position >= 0.5:
-            tqdm.write(f'[Cleared! Episode {i_episode}] max_position={max_position:.3f}')
+        if terminated:
+            tqdm.write(f'[Solved! Episode {i_episode}] placed={max_placed} steps={info.get("step_count", 0)}')
             torch.save(ppo.actor.state_dict(), os.path.join(results_dir, "models", "rnd_ppo_actor_cleared.pth"))
             torch.save(ppo.critic.state_dict(), os.path.join(results_dir, "models", "rnd_ppo_critic_cleared.pth"))
 
         if i_episode % 10 == 0:
             recent_total = np.mean(total_return_list[-10:])
             recent_original = np.mean(original_return_list[-10:])
-            recent_max_pos = np.mean(max_pos_list[-10:])
+            recent_placed = np.mean(placed_list[-10:])
+            recent_steps = np.mean(step_list[-10:])
             pbar.set_postfix({
                 'tot': f'{recent_total:.1f}',
                 'orig': f'{recent_original:.1f}',
-                'pos': f'{recent_max_pos:.3f}',
+                'placed': f'{recent_placed:.1f}',
+                'steps': f'{recent_steps:.1f}',
                 'β': f'{current_beta:.2f}',
             })
             tqdm.write(
                 f'[Episode {i_episode}] '
                 f'total_return: {recent_total:.1f}, '
                 f'original_return: {recent_original:.1f}, '
-                f'max_pos: {recent_max_pos:.3f}, '
+                f'placed: {recent_placed:.1f}, '
+                f'steps: {recent_steps:.1f}, '
                 f'beta: {current_beta:.2f}'
             )
 
         if i_episode % PPO_EVAL_INTERVAL == 0:
-            eval_env = make_env(render_mode="human")
+            eval_env = make_huarongdao_env(render_mode="human")
             eval_return = evaluate(eval_env, ppo)
             eval_env.close()
             tqdm.write(
@@ -300,7 +307,7 @@ def plot_return(total_return_list, original_return_list, results_dir):
     ax1.plot(mv, color='steelblue', label='moving avg (9)')
     ax1.set_xlabel('Episode')
     ax1.set_ylabel('Return (original)')
-    ax1.set_title('RND+PPO on MountainCar-v0 (Original Reward)')
+    ax1.set_title('RND+PPO on DigitalHuarongdaoEnv (Original Reward)')
     ax1.legend()
 
     mv2 = moving_average(total_return_list, 9)
@@ -308,7 +315,7 @@ def plot_return(total_return_list, original_return_list, results_dir):
     ax2.plot(mv2, color='darkorange', label='moving avg (9)')
     ax2.set_xlabel('Episode')
     ax2.set_ylabel('Return (total = ext + beta*r_int)')
-    ax2.set_title('RND+PPO on MountainCar-v0 (Total Reward)')
+    ax2.set_title('RND+PPO on DigitalHuarongdaoEnv (Total Reward)')
     ax2.legend()
 
     plt.tight_layout()
@@ -320,7 +327,7 @@ def plot_return(total_return_list, original_return_list, results_dir):
 def main():
     device = torch.device("cuda" if PPO_USE_GPU else "cpu")
 
-    env = make_env()
+    env = make_huarongdao_env()
     torch.manual_seed(0)
 
     state_dim = env.observation_space.shape[0]

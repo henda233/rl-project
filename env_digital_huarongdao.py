@@ -41,7 +41,8 @@ class DigitalHuarongdaoEnv(gym.Env):
         return self._grid.flatten().astype(np.float32)
 
     def _get_info(self):
-        return {"step_count": self._step_count}
+        placed = int(np.sum((self._grid == self._goal_grid) & (self._grid != 0)))
+        return {"step_count": self._step_count, "placed_count": placed}
 
     def _valid_actions(self):
         er, ec = self._empty_pos

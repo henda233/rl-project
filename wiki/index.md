@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-10
+> 🔄 最后同步：2026-06-10 16:20
 
 ## 模块总览
 
@@ -14,6 +14,7 @@
 | `PPO 生态` | [🔗](./abstract/ppo-impl.md) / [并行](./abstract/ppo-parallel-training.md) / [RND](./abstract/rnd-impl.md) / [推理](./abstract/inference-scripts.md) | GAE + advantage norm + entropy bonus，多 k 并行对比，RND 内在奖励探索，推理录制 mp4 | ✅ |
 | `PPO 训练增强` | [🔗](./abstract/ppo-impl.md)（训练增强段） | 最优模型保存（原始 return）、通关检测、图保存、再训练 | ✅ |
 | `数字华容道` | [🔗](./abstract/docs/digital-huarongdao-design.md) / [环境](./abstract/huarongdao-env.md) / [渲染测试](./abstract/huarongdao-render-test.md) | n×n 滑块拼图，Discrete(4)，正向打乱保证可解，ansi/rgb_array(点阵数字)/human 渲染 | ✅ |
+| `Agent 切换华容道` | [🔗](./abstract/switch-to-huarongdao.md) | ppo_agent/ppo_rnd_agent 从 MountainCar 切换为华容道，删除塑形/再训练 | ✅ |
 
 ## 计划列表
 
@@ -30,10 +31,11 @@
 | `PPO 再训练功能` | [🔗](./plan/ppo-retraining.md) | completed |
 | `PPO + RND 探索算法` | [🔗](./plan/implement-rnd.md) | completed |
 | `实现数字华容道游戏环境` | [🔗](./plan/implement-huarongdao-env.md) | completed |
+| `PPO/RND Agent 切换华容道` | [🔗](./plan/switch-to-huarongdao.md) | completed |
 
 ## TODO列表
 
-- [x] 数字华容道环境实现（env_digital_huarongdao.py + config 参数）
+- [x] PPO/RND Agent 切换华容道（ppo_agent.py + ppo_rnd_agent.py 破坏性更新）
 
 ## 笔记
 
@@ -59,6 +61,8 @@
 
 ## 全局更新日志（近5条）
 
+- `06-10 16:20`: PPO/RND 切换华容道执行完毕 —— config.py 清理、env info 增强、ppo_agent.py/ppo_rnd_agent.py 破坏性改造完成
+- `06-10 15:00`: PPO/RND 切换华容道计划 —— `wiki/request/switch-to-huarongdao.md`、`wiki/plan/switch-to-huarongdao.md`、`wiki/abstract/switch-to-huarongdao.md`、index 更新
 - `06-10 14:30`: 华容道渲染测试 —— `test_huarongdao_render.py` human 模式随机步可视化
 - `06-10 14:00`: 华容道环境实现 —— `env_digital_huarongdao.py` + `config.py` HUARONGDAO 参数段，rgb_array 点阵数字渲染，env_checker 通过
 - `06-10 12:00`: 华容道需求+计划 —— `wiki/request/digital-huarongdao-env.md`、`wiki/plan/implement-huarongdao-env.md`、设计摘要
