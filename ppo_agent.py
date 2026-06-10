@@ -23,7 +23,7 @@ class PolicyNet(torch.nn.Module):
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
-        return F.softmax(self.fc2(x), dim=1)
+        return self.fc2(x)
 
 
 class ValueNet(torch.nn.Module):
@@ -63,8 +63,8 @@ class PPO:
 
     def take_action(self, state):
         state = torch.tensor([state], dtype=torch.float).to(self.device)
-        probs = self.actor(state)
-        action_dist = torch.distributions.Categorical(probs)
+        logits = self.actor(state)
+        action_dist = torch.distributions.Categorical(logits=logits)
         action = action_dist.sample()
         return action.item()
 
@@ -82,15 +82,15 @@ class PPO:
         advantage = advantage.to(self.device).view(-1, 1)
         advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)
 
-        old_log_probs = torch.log(self.actor(states).gather(1, actions)).detach()
+        old_log_probs = F.log_softmax(self.actor(states), dim=1).gather(1, actions).detach()
 
         for _ in range(self.epochs):
-            probs = self.actor(states)
-            action_dist = torch.distributions.Categorical(probs)
-            log_probs = torch.log(probs.gather(1, actions))
+            logits = self.actor(states)
+            log_probs = F.log_softmax(logits, dim=1).gather(1, actions)
             ratio = torch.exp(log_probs - old_log_probs)
             surr1 = ratio * advantage
             surr2 = torch.clamp(ratio, 1 - self.eps, 1 + self.eps) * advantage
+            action_dist = torch.distributions.Categorical(logits=logits)
             entropy = action_dist.entropy().mean()
             actor_loss = torch.mean(-torch.min(surr1, surr2)) - self.entropy_coef * entropy
             critic_loss = torch.mean(F.mse_loss(self.critic(states), td_target.detach()))

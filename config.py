@@ -27,7 +27,9 @@ RND_BUFFER_SIZE = 1                    # 状态滑动缓冲区大小（保留最
 
 # ==================== 数字华容道配置（env_digital_huarongdao.py 使用） ====================
 
-HUARONGDAO_N = 5                       # 棋盘大小 n×n
+HUARONGDAO_N = 4                       # 棋盘大小 n×n
 HUARONGDAO_MAX_STEPS = 200             # 最大步数
 HUARONGDAO_SHUFFLE_STEPS = 50          # 正向打乱步数
-HUARONGDAO_FIRST_PLACEMENT_REWARD = 5  # 首次归位奖励
+HUARONGDAO_FIRST_PLACEMENT_REWARD = 2  # 首次归位奖励
+HUARONGDAO_LEGAL_STEP_REWARD = -1     # 合法动作每步奖励
+HUARONGDAO_ILLEGAL_STEP_REWARD = -2   # 非法动作每步奖励

@@ -2,7 +2,8 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 from config import (HUARONGDAO_N, HUARONGDAO_MAX_STEPS,
-                     HUARONGDAO_SHUFFLE_STEPS, HUARONGDAO_FIRST_PLACEMENT_REWARD)
+                     HUARONGDAO_SHUFFLE_STEPS, HUARONGDAO_FIRST_PLACEMENT_REWARD,
+                     HUARONGDAO_LEGAL_STEP_REWARD, HUARONGDAO_ILLEGAL_STEP_REWARD)
 
 
 class DigitalHuarongdaoEnv(gym.Env):
@@ -55,6 +56,17 @@ class DigitalHuarongdaoEnv(gym.Env):
                 valid.append(a)
         return valid
 
+    def get_action_mask(self):
+        """返回合法动作掩码 (4,) bool 数组。"""
+        er, ec = self._empty_pos
+        n = self.n
+        return np.array([
+            er > 0,      # 上
+            er < n - 1,  # 下
+            ec > 0,      # 左
+            ec < n - 1,  # 右
+        ], dtype=bool)
+
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         n = self.n
@@ -96,24 +108,25 @@ class DigitalHuarongdaoEnv(gym.Env):
 
         in_bounds = (0 <= tr < n) and (0 <= tc < n)
 
+        self._step_count += 1
+
         if in_bounds:
             self._grid[er, ec] = self._grid[tr, tc]
             self._grid[tr, tc] = 0
             self._empty_pos = (tr, tc)
 
-        self._step_count += 1
-
-        # 奖励: -1/步 + 首次归位奖励
-        reward = -1.0
-        new_placements = 0
-        for r in range(n):
-            for c in range(n):
-                if (self._grid[r, c] == self._goal_grid[r, c]
-                        and not self._rewarded_mask[r, c]
-                        and self._grid[r, c] != 0):
-                    self._rewarded_mask[r, c] = True
-                    new_placements += 1
-        reward += self.first_placement_reward * new_placements
+            reward = HUARONGDAO_LEGAL_STEP_REWARD
+            new_placements = 0
+            for r in range(n):
+                for c in range(n):
+                    if (self._grid[r, c] == self._goal_grid[r, c]
+                            and not self._rewarded_mask[r, c]
+                            and self._grid[r, c] != 0):
+                        self._rewarded_mask[r, c] = True
+                        new_placements += 1
+            reward += self.first_placement_reward * new_placements
+        else:
+            reward = HUARONGDAO_ILLEGAL_STEP_REWARD
 
         terminated = np.array_equal(self._grid, self._goal_grid)
         truncated = self._step_count >= self.max_steps

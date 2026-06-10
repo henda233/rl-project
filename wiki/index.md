@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-10 16:20
+> 🔄 最后同步：2026-06-10 17:00
 
 ## 模块总览
 
@@ -14,7 +14,7 @@
 | `PPO 生态` | [🔗](./abstract/ppo-impl.md) / [并行](./abstract/ppo-parallel-training.md) / [RND](./abstract/rnd-impl.md) / [推理](./abstract/inference-scripts.md) | GAE + advantage norm + entropy bonus，多 k 并行对比，RND 内在奖励探索，推理录制 mp4 | ✅ |
 | `PPO 训练增强` | [🔗](./abstract/ppo-impl.md)（训练增强段） | 最优模型保存（原始 return）、通关检测、图保存、再训练 | ✅ |
 | `数字华容道` | [🔗](./abstract/docs/digital-huarongdao-design.md) / [环境](./abstract/huarongdao-env.md) / [渲染测试](./abstract/huarongdao-render-test.md) | n×n 滑块拼图，Discrete(4)，正向打乱保证可解，ansi/rgb_array(点阵数字)/human 渲染 | ✅ |
-| `Agent 切换华容道` | [🔗](./abstract/switch-to-huarongdao.md) | ppo_agent/ppo_rnd_agent 从 MountainCar 切换为华容道，删除塑形/再训练 | ✅ |
+| `Agent 切换华容道` | [🔗](./abstract/switch-to-huarongdao.md) | ppo_agent/ppo_rnd_agent 从 MountainCar 切换为华容道，删除塑形/再训练，非法动作 -2 惩罚替代 Action Masking | ✅ |
 
 ## 计划列表
 
@@ -59,8 +59,14 @@
 
 最优模型按**原始 return**（不含塑形/好奇心奖励）选择 —— 直接衡量任务效率，避免塑形奖励污染模型选择。
 
+### Action Masking 回退为非法动作惩罚
+
+原方案在采样时将非法动作 logit 置 `-inf`，导致采样分布（masked）与更新分布（unmasked log_softmax）不一致。old_log_probs 从原始 logits 重算，ratio = exp(new - old) 溢出 → inf × 0 = NaN → 网络权重 NaN。回退为环境区分合法/非法奖励（-1 / -2），通过 `HUARONGDAO_LEGAL_STEP_REWARD` / `HUARONGDAO_ILLEGAL_STEP_REWARD` 配置。采样分布=更新分布，消除 ratio 爆炸根因。
+
 ## 全局更新日志（近5条）
 
+- `06-10 17:30`: Action Masking 回退为非法动作惩罚 —— 因 NaN 问题移除采样 mask，env step 区分合法(-1)/非法(-2)奖励，config.py 新增 HUARONGDAO_LEGAL/ILLEGAL_STEP_REWARD，ppo_agent/ppo_rnd_agent 清理 action_mask
+- `06-10 17:00`: Action Masking 实现 —— env 新增 `get_action_mask()`，PolicyNet 改回 logits，采样时 mask 非法动作，ppo_agent.py/ppo_rnd_agent.py/`huarongdao-env.md`/`switch-to-huarongdao.md`/index 更新
 - `06-10 16:20`: PPO/RND 切换华容道执行完毕 —— config.py 清理、env info 增强、ppo_agent.py/ppo_rnd_agent.py 破坏性改造完成
 - `06-10 15:00`: PPO/RND 切换华容道计划 —— `wiki/request/switch-to-huarongdao.md`、`wiki/plan/switch-to-huarongdao.md`、`wiki/abstract/switch-to-huarongdao.md`、index 更新
 - `06-10 14:30`: 华容道渲染测试 —— `test_huarongdao_render.py` human 模式随机步可视化
