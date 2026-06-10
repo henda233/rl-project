@@ -26,7 +26,7 @@ PPO_LMBDA = 0.95                      # GAE λ
 PPO_EPOCHS = 10                       # 每批数据训练轮数
 PPO_EPS = 0.2                         # Clip 范围
 PPO_NUM_EPISODES = 10000               # 训练总 episode 数
-PPO_EVAL_INTERVAL = 500               # 评估间隔
+PPO_EVAL_INTERVAL = 1000               # 评估间隔
 PPO_ENTROPY_COEF = 0.05               # 熵正则化系数
 PPO_USE_GPU = False                  # 是否使用 GPU 训练（True=cuda, False=cpu）
 PPO_INFERENCE_EPISODES = 3           # 推理录制时运行的 episode 数
@@ -45,14 +45,16 @@ PPO_INFERENCE_CRITIC_PATH = "results/models/ppo_critic_best.pth" # 推理时加�
 RND_HIDDEN_DIM = 128                   # RND 隐藏层维度
 RND_OUTPUT_DIM = 256                   # 目标/预测网络输出维度（随机投影维度）
 RND_LR = 1e-3                          # RND 预测网络学习率
-RND_BETA = 100                         # 内在奖励系数（β）
+RND_BETA = 100                         # 内在奖励系数起始值（β）
+RND_BETA_END = 1                      # 内在奖励系数终止值（线性衰减地板）
+RND_BETA_DECAY = 0.005                  # 每 episode 线性衰减量
 RND_EPOCHS = 5                        # 预测网络每批数据训练轮数
 RND_NUM_EPISODES = 10000               # RND 训练总 episode 数
-RND_BUFFER_SIZE = 5                    # 状态滑动缓冲区大小（保留最近 N 个 episode 的状态）
+RND_BUFFER_SIZE = 1                    # 状态滑动缓冲区大小（保留最近 N 个 episode 的状态）
 
 # --- RND 推理（run_ppo_rnd_agent.py 使用） ---
-RND_INFERENCE_ACTOR_PATH = "results/rnd_20260605_195308/models/rnd_ppo_actor_best.pth"          # 推理时加载的 Actor 权重路径（如 results/rnd_xxx/models/rnd_ppo_actor_cleared.pth）
-RND_INFERENCE_CRITIC_PATH = "results/rnd_20260605_195308/models/rnd_ppo_critic_best.pth"         # 推理时加载的 Critic 权重路径（如 results/rnd_xxx/models/rnd_ppo_critic_cleared.pth）
+RND_INFERENCE_ACTOR_PATH = "results/rnd_20260605_204647/models/rnd_ppo_actor_best.pth"          # 推理时加载的 Actor 权重路径（如 results/rnd_xxx/models/rnd_ppo_actor_cleared.pth）
+RND_INFERENCE_CRITIC_PATH = "results/rnd_20260605_204647/models/rnd_ppo_critic_best.pth"         # 推理时加载的 Critic 权重路径（如 results/rnd_xxx/models/rnd_ppo_critic_cleared.pth）
 
 # ==================== 奖励塑形（两个算法共用） ====================
 

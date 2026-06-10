@@ -12,7 +12,7 @@ from config import (
     PPO_HIDDEN_DIM, PPO_ACTOR_LR, PPO_CRITIC_LR, PPO_GAMMA,
     PPO_LMBDA, PPO_EPOCHS, PPO_EPS, PPO_EVAL_INTERVAL,
     PPO_ENTROPY_COEF, PPO_USE_GPU,
-    RND_HIDDEN_DIM, RND_OUTPUT_DIM, RND_LR, RND_BETA, RND_EPOCHS,
+    RND_HIDDEN_DIM, RND_OUTPUT_DIM, RND_LR, RND_BETA, RND_BETA_END, RND_BETA_DECAY, RND_EPOCHS,
     RND_NUM_EPISODES, RND_BUFFER_SIZE,
 )
 from env import make_env
@@ -197,6 +197,7 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
     max_pos_list = []
     best_original_return = -float('inf')
 
+    current_beta = RND_BETA
     pbar = tqdm(range(1, num_episodes + 1), desc='Training RND+PPO')
     for i_episode in pbar:
         episode_original_return = 0
@@ -227,7 +228,7 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
 
         # Combine rewards: r_total = r_ext + β * r_int_norm
         r_ext = np.full(len(episode_states), -1.0)  # MountainCar: -1 per step
-        r_total = r_ext + RND_BETA * r_int_norm
+        r_total = r_ext + current_beta * r_int_norm
 
         episode_total_return = r_total.sum()
 
@@ -268,12 +269,14 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
                 'tot': f'{recent_total:.1f}',
                 'orig': f'{recent_original:.1f}',
                 'pos': f'{recent_max_pos:.3f}',
+                'β': f'{current_beta:.2f}',
             })
             tqdm.write(
                 f'[Episode {i_episode}] '
                 f'total_return: {recent_total:.1f}, '
                 f'original_return: {recent_original:.1f}, '
-                f'max_pos: {recent_max_pos:.3f}'
+                f'max_pos: {recent_max_pos:.3f}, '
+                f'beta: {current_beta:.2f}'
             )
 
         if i_episode % PPO_EVAL_INTERVAL == 0:
@@ -283,6 +286,8 @@ def train_rnd_ppo(env, ppo, rnd, num_episodes, results_dir):
             tqdm.write(
                 f'[Eval  episode {i_episode}] return: {eval_return:.1f}'
             )
+
+        current_beta = max(RND_BETA_END, current_beta - RND_BETA_DECAY)
 
     return total_return_list, original_return_list
 

@@ -18,7 +18,7 @@
 | `PPO 算法` | [🔗](./abstract/ppo-impl.md) / [计划](./plan/implement-ppo.md) | GAE + advantage norm + entropy bonus，PPO_USE_GPU 控制设备 | ✅ | 06-05 |
 | `PPO 并行训练` | [🔗](./abstract/ppo-parallel-training.md) / [计划](./plan/ppo-parallel-training.md) | multiprocessing 多 k 对比，自动选最优，双 subplot 可视化 | ✅ | 06-05 |
 | `PPO 训练增强` | [计划](./plan/ppo-training-enhancement.md) / [需求](./request/ppo-training-enhancement.md) | 模型保存 + 通关检测(>=0.5) + 图保存 + 推理录制 mp4 | ✅ | 06-05 |
-| `RND 探索算法` | [🔗](./abstract/rnd-impl.md) / [计划](./plan/implement-rnd.md) | PPO + RND 替代势能塑形，滑动缓冲区 + 内在奖励驱动探索 | ✅ | 06-05 |
+| `RND 探索算法` | [🔗](./abstract/rnd-impl.md) / [计划](./plan/implement-rnd.md) | PPO + RND 替代势能塑形，滑动缓冲区 + 内在奖励驱动探索，β 线性衰减 | ✅ | 06-05 |
 | `PPO 推理脚本` | [🔗](./abstract/inference-scripts.md) | run_ppo_agent.py / run_ppo_rnd_agent.py，config 配置模型路径，时间戳视频输出 | ✅ | 06-05 |
 
 ## 需求列表
@@ -35,6 +35,7 @@
 | `PPO 训练增强需求` | [🔗](./request/ppo-training-enhancement.md) | completed | `PPO 训练增强`（已完成） |
 | `PPO 再训练需求` | [🔗](./request/ppo-retraining.md) | completed | `PPO 再训练功能`（已完成） |
 | `RND 探索算法需求` | [🔗](./request/rnd-implementation.md) | completed | `PPO + RND 探索算法`（已完成） |
+| `RND_BETA 线性衰减需求` | [🔗](./request/rnd-beta-decay.md) | completed | — |
 
 ## 计划列表
 
@@ -54,6 +55,7 @@
 ## TODO列表
 
 - [x] RND 探索算法实现（PPO + RND 替代势能塑形）
+- [x] RND_BETA 线性衰减（每 episode 递减 0.05，地板 1.0）
 
 ## 笔记
 
@@ -71,6 +73,7 @@
 
 ## 全局更新日志（近5条）
 
+- `06-05 21:30`: RND_BETA 线性衰减——config.py 新增 RND_BETA_END=1.0、RND_BETA_DECAY=0.05，ppo_rnd_agent.py current_beta 每 episode 递减 max(RND_BETA_END, current_beta - RND_BETA_DECAY)，progress bar 新增 β 显示
 - `06-05 21:00`: PPO/PPO-RND 最优模型保存标准改为原始return——ppo_agent.py `best_shaped_return` → `best_original_return`，ppo_rnd_agent.py `best_total_return` → `best_original_return`。原始return直接衡量任务效率（步数越少越好），避免塑形/好奇心奖励污染模型选择。
 - `06-05 20:30`: PPO/RND 推理脚本完善——config.py 新增 PPO_INFERENCE_ACTOR_PATH/CRITIC_PATH 和 RND_INFERENCE_ACTOR_PATH/CRITIC_PATH，run_ppo_agent.py 改为 config 驱动 + 时间戳视频路径，新建 run_ppo_rnd_agent.py 推理脚本。
 - `06-05 20:00`: RND 探索算法实现完成——ppo_rnd_agent.py 创建（RNDTargetNet/PredictorNet/RNDModule + 滑动缓冲区 + PPO 训练循环），config.py 追加 RND_NUM_EPISODES/RND_BUFFER_SIZE，ppo_agent.py 从头训练改为时间戳目录。训练验证通过。

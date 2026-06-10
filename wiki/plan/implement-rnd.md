@@ -81,3 +81,4 @@ running_std = (1 - alpha) * running_std + alpha * batch_std
 
 - `2026-06-05 19:30`: 计划已生成（待执行）
 - `2026-06-05 20:00`: S1 config.py RND 配置段完成（含 RND_NUM_EPISODES, RND_BUFFER_SIZE）；S2-S4 ppo_rnd_agent.py 创建完成，含 RND 双网络 + 滑动缓冲区 + PPO 训练循环 + 评估保存可视化；ppo_agent.py 从头训练改为时间戳目录；S5 训练验证通过；S6 WIKI 摘要和 index 更新完成
+- `2026-06-05`: RND_BETA 线性衰减——config.py 新增 RND_BETA_END=1.0、RND_BETA_DECAY=0.05，ppo_rnd_agent.py current_beta 每 episode 递减 max(RND_BETA_END, current_beta - RND_BETA_DECAY)，progress bar 新增 β 显示
