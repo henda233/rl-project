@@ -69,3 +69,10 @@ POTENTIAL_K = 2  # 势函数系数 k
 PPO_NUM_ENVS = 5            # 并行环境数量
 POTENTIAL_K_START = 1     # k 起始值
 POTENTIAL_K_INTERVAL = 2  # k 间隔
+
+# ==================== 数字华容道配置（env_digital_huarongdao.py 使用） ====================
+
+HUARONGDAO_N = 3                       # 棋盘大小 n×n
+HUARONGDAO_MAX_STEPS = 200             # 最大步数
+HUARONGDAO_SHUFFLE_STEPS = 50          # 正向打乱步数
+HUARONGDAO_FIRST_PLACEMENT_REWARD = 5  # 首次归位奖励
