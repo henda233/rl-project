@@ -33,3 +33,15 @@ HUARONGDAO_SHUFFLE_STEPS = 50          # 正向打乱步数
 HUARONGDAO_FIRST_PLACEMENT_REWARD = 2  # 首次归位奖励
 HUARONGDAO_LEGAL_STEP_REWARD = -1     # 合法动作每步奖励
 HUARONGDAO_ILLEGAL_STEP_REWARD = -2   # 非法动作每步奖励
+
+# ==================== DeepCubeA Training（deepcubea_train.py 使用） ====================
+
+DEEPCUBEA_T_MIN = 1                    # 随机游走最小步数
+DEEPCUBEA_T_MAX = 100                   # 随机游走最大步数
+DEEPCUBEA_TRAIN_SET_SIZE = 5000       # 训练集状态数
+DEEPCUBEA_LR = 1e-3                    # 学习率
+DEEPCUBEA_BATCH_SIZE = 256             # 批大小
+DEEPCUBEA_ITERATIONS = 1000           # 值迭代总轮数（epoch）
+DEEPCUBEA_HIDDEN_DIM = 256             # 隐藏层维度
+DEEPCUBEA_USE_GPU = True               # 是否使用 GPU
+DEEPCUBEA_CHECKPOINT_INTERVAL = 500   # checkpoint 保存间隔（epoch）

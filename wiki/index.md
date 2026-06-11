@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-11 17:40
+> 🔄 最后同步：2026-06-11 18:50
 
 ## 模块总览
 
@@ -13,6 +13,8 @@
 | `PPO 实现` | [🔗](./abstract/ppo-impl.md) | GAE + advantage norm + entropy bonus，最优模型按原始 return 保存 | ✅ |
 | `RND 实现` | [🔗](./abstract/rnd-impl.md) | 内在奖励探索，β 线性衰减，滑动缓冲区训练预测网络 | ✅ |
 | `切换华容道` | [🔗](./abstract/switch-to-huarongdao.md) | PPO/RND Agent 从 MountainCar 切换为华容道的破坏性改造记录 | ✅ |
+| `DeepCubeA 研究` | [🔗](./abstract/docs/deepcubea-research.md) | 启发式搜索优于RL，近似值迭代训练DNN逼近J(s)，加权A*求解 | ✅ |
+| `DeepCubeA 网络模块` | [🔗](./abstract/deepcubea-network.md) | 256维one-hot编解码、纯函数transition、2FC+4ResBlock网络、predict_j接口 | ✅ |
 | `Gym 参考` | [🔗](./abstract/gymnasium/agent-training.md) / [custom-env](./abstract/gymnasium/custom-env.md) / [recording](./abstract/gymnasium/recording-agent.md) | ε-greedy 训练循环、Env 继承规范、Record wrapper | ✅ |
 | `参考代码` | [🔗](./abstract/examples/actor-critic-example.md) / [rl-utils](./abstract/examples/rl-utils.md) | PolicyNet/ValueNet、ReplayBuffer、on-policy 循环 | ✅ |
 
@@ -24,12 +26,18 @@
 | `实现 RND 探索算法` | [🔗](./plan/implement-rnd.md) | completed |
 | `实现数字华容道环境` | [🔗](./plan/implement-huarongdao-env.md) | completed |
 | `PPO/RND Agent 切换华容道` | [🔗](./plan/switch-to-huarongdao.md) | completed |
+| `DeepCubeA 神经网络训练` | [🔗](./plan/deepcubea-network.md) | completed（best loss=0.0138, epoch 527） |
+| `DeepCubeA 加权 A* 搜索` | [🔗](./plan/deepcubea-search.md) | waiting |
 
 ## TODO列表
 
-- [x] 清理 MountainCar 时代废弃代码（2026-06-11）
+- [ ] 执行DeepCubeA 加权 A* 搜索（`wiki/plan/deepcubea-search.md`）
 
 ## 笔记
+
+### AVI 训练发散（DeepCubeA）
+
+近似值迭代 (AVI) 用函数逼近器做 Bellman 备份时，目标值每 epoch 变化导致误差累积、loss 发散。类似 DQN 无 target network 时的表现。缓解方案：target network、增大训练集、或用更慢的学习率。当前保留最佳 checkpoint（epoch 527, loss=0.0138）供 A* 搜索使用。
 
 ### 环境与工具
 
@@ -50,6 +58,9 @@
 
 ## 全局更新日志（近5条）
 
+- `06-11 18:50`: DeepCubeA 训练完成 —— `deepcubea_train.py`（S4-S5）、执行训练（S6, 4131 状态/1000 epoch/best loss=0.0138）、WIKI 更新（S7）；观察到 AVI 发散，保留 best checkpoint，更新 index 笔记
+- `06-11 19:00`: DeepCubeA S1-S3 完成 —— `config.py` 追加 DEEPCUBEA_* 参数（GPU 默认 True）、`deepcubea_network.py`（encode/decode/transition/DeepCubeANetwork），测试全通过；创建 `wiki/abstract/deepcubea-network.md`，更新 index 计划状态
+- `06-11 18:00`: 制定 DeepCubeA 复现执行计划 —— 创建 `wiki/request/deepcubea-reproduction.md`、`wiki/plan/deepcubea-network.md`、`wiki/plan/deepcubea-search.md`、`wiki/abstract/docs/deepcubea-research.md`
 - `06-11 17:40`: 清理 MountainCar 时代废弃代码（agent.py/env.py/ppo_parallel.py/run_*.py）及对应 WIKI 摘要/计划/需求；重写保留摘要和 index
 - `06-10 17:30`: Action Masking 回退为非法动作惩罚 —— 因 NaN 问题移除采样 mask，env step 区分合法(-1)/非法(-2)奖励
 - `06-10 16:20`: PPO/RND 切换华容道执行完毕 —— ppo_agent.py/ppo_rnd_agent.py 破坏性改造完成
