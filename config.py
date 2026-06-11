@@ -44,7 +44,6 @@ DEEPCUBEA_BATCH_SIZE = 256             # 批大小
 DEEPCUBEA_ITERATIONS = 2000           # 值迭代总轮数（epoch）
 DEEPCUBEA_HIDDEN_DIM = 256             # 隐藏层维度
 DEEPCUBEA_USE_GPU = True               # 是否使用 GPU
-DEEPCUBEA_LOG_INTERVAL = 1          # 训练 epoch 日志输出间隔
 DEEPCUBEA_TRAIN_DATA_PATH = "results/train_data/train_states.npy"  # 训练数据保存/加载路径
 DEEPCUBEA_CHECKPOINT_INTERVAL = 500   # checkpoint 保存间隔（epoch）
 

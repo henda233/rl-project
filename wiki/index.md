@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-11 20:30
+> 🔄 最后同步：2026-06-11 20:45
 
 ## 模块总览
 
@@ -61,6 +61,7 @@
 
 ## 全局更新日志（近7条）
 
+- `06-11 20:45`: DeepCubeA 训练进度改用 tqdm —— `deepcubea_train.py` epoch 循环 tqdm 进度条（postfix 显示 loss/best_loss，desc 显示 "Computing targets" 阶段），`config.py` 移除 `DEEPCUBEA_LOG_INTERVAL`
 - `06-11 20:30`: DeepCubeA 数据生成/训练分离完成 —— S1 config 新增 `DEEPCUBEA_LOG_INTERVAL`/`DEEPCUBEA_TRAIN_DATA_PATH`；S2 新建 `deepcubea_generate_data.py`（tqdm 进度条 + 去重 + .npy 保存）；S3 `deepcubea_train.py` 改为从 .npy 加载数据、日志间隔配置化；WIKI 全部更新
 - `06-11 20:30`: 制定 DeepCubeA 数据生成/训练分离计划 —— 创建 `wiki/request/deepcubea-data-training-separation.md`、`wiki/plan/deepcubea-data-training-separation.md`（S1 config 新增参数、S2 新建生成脚本、S3 改造训练脚本）；index 已更新
 - `06-11 20:00`: DeepCubeA v1 评估 + 参数调整 —— A* Short 档胜率仅 32%（T~U(1,100)/5k states/LR1e-3 导致 J(s) 泛化差）；分析根因（随机游走低效、状态覆盖不足、AVI 震荡）；`config.py` 训练参数调整为 v2（T~U(10,500)/50k states/LR1e-4/2k iter）；搜索模块批量预测优化；WIKI 全部更新

@@ -12,12 +12,12 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from datetime import datetime
 from pathlib import Path
+from tqdm import tqdm
 from config import (
     DEEPCUBEA_LR,
     DEEPCUBEA_BATCH_SIZE,
     DEEPCUBEA_ITERATIONS,
     DEEPCUBEA_USE_GPU,
-    DEEPCUBEA_LOG_INTERVAL,
     DEEPCUBEA_TRAIN_DATA_PATH,
     DEEPCUBEA_CHECKPOINT_INTERVAL,
 )
@@ -128,8 +128,11 @@ def train():
     best_loss = float("inf")
     losses = []
 
-    for epoch in range(1, DEEPCUBEA_ITERATIONS + 1):
+    pbar = tqdm(range(1, DEEPCUBEA_ITERATIONS + 1), desc="Training")
+    for epoch in pbar:
+        pbar.set_description("Computing targets")
         targets = compute_targets(states, network, device).to(device)
+        pbar.set_description("Training")
 
         network.train()
         perm = torch.randperm(len(states), device=device)
@@ -159,9 +162,7 @@ def train():
         if is_best:
             best_loss = avg_loss
 
-        if epoch % DEEPCUBEA_LOG_INTERVAL == 0 or epoch == 1 or is_best:
-            marker = " *" if is_best else ""
-            print(f"Epoch {epoch:>5}/{DEEPCUBEA_ITERATIONS}  loss={avg_loss:.6f}{marker}")
+        pbar.set_postfix(loss=f"{avg_loss:.6f}", best=f"{best_loss:.6f}")
 
         if is_best:
             torch.save(

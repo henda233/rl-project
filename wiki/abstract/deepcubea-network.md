@@ -10,7 +10,7 @@ dependencies:
   - "wiki/abstract/docs/deepcubea-research.md"
   - "wiki/abstract/deepcubea-search.md"
 created_at: 2026-06-11 19:00:00
-updated_at: 2026-06-11 20:30:00
+updated_at: 2026-06-11 20:45:00
 ---
 # 摘要：DeepCubeA 神经网络模块
 
@@ -20,9 +20,9 @@ updated_at: 2026-06-11 20:30:00
 - **纯函数状态转移**：`transition(grid_flat, action)` 无环境副作用，非法动作返回 None，action 语义与环境一致（0=上,1=下,2=左,3=右）
 - **网络结构**：Input(256) → FC(256)+ReLU → FC(256)+ReLU → 4×ResBlock → FC(1)，输出标量 J(s)
 - **残差块**：FC(256)+ReLU → FC(256) → +input → ReLU
-- **训练方式**：近似值迭代 (AVI)，每 epoch 全量计算 J'(s) = min_a (1+J(A(s,a))) 作为 target（目标状态 J'=0），MSE loss + Adam 做 batch 训练
+- **训练方式**：近似值迭代 (AVI)，每 epoch 全量计算 J'(s) = min_a (1+J(A(s,a))) 作为 target（目标状态 J'=0），MSE loss + Adam 做 batch 训练；tqdm 进度条显示 epoch 进度、当前 loss 和 best loss，"Computing targets" 阶段在 desc 中体现
 - **AVI 发散**：函数逼近器 Bellman 备份误差累积的典型模式，无 target network 时 epoch 527 后 loss 从 0.014 升至 0.26
-- **数据生成/训练分离**：`deepcubea_generate_data.py` 独立生成训练数据并保存 `.npy`，`deepcubea_train.py` 从文件加载训练；`DEEPCUBEA_LOG_INTERVAL` 配置日志间隔，`DEEPCUBEA_TRAIN_DATA_PATH` 配置数据路径
+- **数据生成/训练分离**：`deepcubea_generate_data.py` 独立生成训练数据并保存 `.npy`，`deepcubea_train.py` 从文件加载训练；`DEEPCUBEA_TRAIN_DATA_PATH` 配置数据路径；`DEEPCUBEA_LOG_INTERVAL` 已移除（tqdm 替代）
 
 ## 首次训练（v1）
 
