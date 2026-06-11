@@ -22,7 +22,7 @@ RND_BETA = 1                         # 内在奖励系数起始值（β）
 RND_BETA_END = 1                      # 内在奖励系数终止值（线性衰减地板）
 RND_BETA_DECAY = 0.005                  # 每 episode 线性衰减量
 RND_EPOCHS = 5                        # 预测网络每批数据训练轮数
-RND_NUM_EPISODES = 1000               # RND 训练总 episode 数
+RND_NUM_EPISODES = 10000               # RND 训练总 episode 数
 RND_BUFFER_SIZE = 1                    # 状态滑动缓冲区大小（保留最近 N 个 episode 的状态）
 
 # ==================== 数字华容道配置（env_digital_huarongdao.py 使用） ====================

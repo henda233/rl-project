@@ -12,7 +12,7 @@ dependencies:
   - "wiki/abstract/rnd-impl.md"
   - "wiki/abstract/docs/digital-huarongdao-design.md"
 created_at: 2026-06-10 15:00:00
-updated_at: 2026-06-10 17:30:00
+updated_at: 2026-06-11 17:40:00
 ---
 # 摘要：PPO/RND Agent 切换华容道环境
 
@@ -25,7 +25,7 @@ updated_at: 2026-06-10 17:30:00
 - **通关检测**：`max_position >= 0.5` → `terminated` flag
 - **RND_HIDDEN_DIM**：128 → 256
 - **删除再训练**：ppo_agent.py 再训练分支及 config 中 PPO_ACTOR_MODEL_PATH / PPO_CRITIC_MODEL_PATH / PPO_RETRAIN_NUM_EPISODES / PPO/RND 推理路径全部移除
-- **不改动**：env.py、agent.py、ppo_parallel.py、推理脚本、RND β 衰减参数（它们引用的被删除配置会导致 ImportError，用户已确认接受）
+- **已清理**：env.py、agent.py、ppo_parallel.py、run_ppo_agent.py、run_ppo_rnd_agent.py 等 MountainCar 时代代码已删除（2026-06-11）
 - **非法动作惩罚**（2026-06-10，替代 Action Masking）：采样阶段不再屏蔽非法动作，改为环境区分合法/非法奖励（`HUARONGDAO_LEGAL_STEP_REWARD=-1` / `HUARONGDAO_ILLEGAL_STEP_REWARD=-2`）。原因：Action Masking 导致采样分布（masked）与更新分布（unmasked）不一致，ratio 溢出产生 NaN。非法动作惩罚方案保持采样=更新分布，避免 NaN，同时通过 -2 vs -1 差异化激励智能体学习避开非法动作
 
 ## 内容概述
@@ -36,4 +36,4 @@ updated_at: 2026-06-10 17:30:00
 
 - **上游依赖**：`ppo-impl.md`（PPO 结构）、`rnd-impl.md`（RND 结构）、`digital-huarongdao-design.md`（华容道环境规格）
 - **下游被依赖**：无
-- **变更扩散评估**：高（config.py 删除多个配置段导致 agent.py / ppo_parallel.py / 推理脚本不可用）
+- **变更扩散评估**：低（废弃代码已物理删除，config.py 仅保留华容道 + PPO/RND 配置）

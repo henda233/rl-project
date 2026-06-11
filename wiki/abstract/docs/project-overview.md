@@ -1,28 +1,31 @@
 ---
 abstract_name: 项目概述
 source_contents:
-  - "docs/项目文档.md"
+  - "env_digital_huarongdao.py"
+  - "ppo_agent.py"
+  - "ppo_rnd_agent.py"
+  - "config.py"
 dependencies: []
 created_at: 2026-06-04 18:36:00
-updated_at: 2026-06-04 18:36:00
+updated_at: 2026-06-11 17:40:00
 ---
 # 摘要：项目概述
 
 ## 核心结论与关键信息
 
-- **项目目标**：使用 gymnasium 的预设环境 MountainCar-v0，实现 Actor-Critic 算法，训练获得高分的智能体（最优策略）
-- **环境**：MountainCar-v0（NOT 自定义环境，项目文档中"自定义2D物理环境"的表述已纠正）
-- **算法**：Actor-Critic（策略网络 + 价值网络，TD 残差驱动更新）
+- **项目目标**：实现 n×n 数字华容道（滑块拼图）强化学习环境，使用 PPO + RND 算法训练智能体求解
+- **环境**：`DigitalHuarongdaoEnv`（gymnasium.Env 子类），Discrete(4) 动作空间（上/下/左/右），正向打乱保证可解
+- **算法**：PPO（Clipped Surrogate Objective + GAE + Advantage Norm + Entropy Bonus）+ RND 内在奖励探索
 - **技术栈**：Python 3.12, numpy, pytorch, tqdm, matplotlib, gymnasium
-- **禁止使用**：现成的强化学习模型/算法库
-- **参考资料**：仅限 `docs/` 目录下文件，禁止访问网络
+- **环境渲染**：支持 ansi（控制台）、rgb_array（点阵数字）、human（pygame 窗口）三种模式
+- **非法动作处理**：环境区分合法/非法奖励（-1 / -2），通过差异化惩罚引导智能体避开非法动作
 
 ## 内容概述
 
-> 项目文档定义了 4 项需求：搭建 MountainCar-v0 环境、实现 Actor-Critic 算法、训练智能体并可视化、预留后续需求扩展空间。技术栈限定在 5 个依赖库内，强调从零实现算法。
+> 项目聚焦数字华容道问题：从 n×n 滑块拼图的 shuffled 状态出发，智能体通过上/下/左/右移动空格，将棋盘恢复为目标顺序。训练采用 PPO on-policy 算法，可选 RND 内在奖励增强探索。
 
 ## 依赖与影响链
 
 - **上游依赖**：无
-- **下游被依赖**：`wiki/abstract/docs/actor-critic-algorithm.md`、`wiki/abstract/gymnasium/mountain-car.md`
-- **变更扩散评估**：高（需求变更会影响所有下游摘要和计划）
+- **下游被依赖**：`wiki/abstract/ppo-impl.md`、`wiki/abstract/rnd-impl.md`、`wiki/abstract/huarongdao-env.md`
+- **变更扩散评估**：中（核心环境/算法变更影响所有下游模块）
