@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-11 20:00
+> 🔄 最后同步：2026-06-11 20:30
 
 ## 模块总览
 
@@ -29,9 +29,11 @@
 | `PPO/RND Agent 切换华容道` | [🔗](./plan/switch-to-huarongdao.md) | completed |
 | `DeepCubeA 神经网络训练` | [🔗](./plan/deepcubea-network.md) | completed（best loss=0.0138, epoch 527） |
 | `DeepCubeA 加权 A* 搜索` | [🔗](./plan/deepcubea-search.md) | completed（v1 评估完成，待 v2 重训后复评） |
+| `DeepCubeA 数据生成/训练分离` | [🔗](./plan/deepcubea-data-training-separation.md) | waitting（计划已确认，待执行） |
 
 ## TODO列表
 
+- [ ] 执行`DeepCubeA 数据生成/训练分离`计划
 - [ ] DeepCubeA 第二次训练（v2 参数：T~U(10,500), 50k states, LR=1e-4, 2k iter）
 - [ ] 训练完成后重新运行 A* 评估（λ=1.0 → 若胜率提升再试 λ=0.3）
 
@@ -60,6 +62,7 @@
 
 ## 全局更新日志（近7条）
 
+- `06-11 20:30`: 制定 DeepCubeA 数据生成/训练分离计划 —— 创建 `wiki/request/deepcubea-data-training-separation.md`、`wiki/plan/deepcubea-data-training-separation.md`（S1 config 新增参数、S2 新建生成脚本、S3 改造训练脚本）；index 已更新
 - `06-11 20:00`: DeepCubeA v1 评估 + 参数调整 —— A* Short 档胜率仅 32%（T~U(1,100)/5k states/LR1e-3 导致 J(s) 泛化差）；分析根因（随机游走低效、状态覆盖不足、AVI 震荡）；`config.py` 训练参数调整为 v2（T~U(10,500)/50k states/LR1e-4/2k iter）；搜索模块批量预测优化；WIKI 全部更新
 - `06-11 19:30`: DeepCubeA 加权 A* 搜索完成 —— `config.py` 追加搜索参数（MODEL_PATH/LAMBDA等）、`deepcubea_search.py`（weighted_astar + evaluate）、`deepcubea_search_test.py`（评估脚本）、`deepcubea_search_smoke_test.py`（单元验证）；抽象和 index 已更新
 - `06-11 18:50`: DeepCubeA 训练完成 —— `deepcubea_train.py`（S4-S5）、执行训练（S6, 4131 状态/1000 epoch/best loss=0.0138）、WIKI 更新（S7）；观察到 AVI 发散，保留 best checkpoint，更新 index 笔记
