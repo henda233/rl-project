@@ -3,13 +3,14 @@ abstract_name: DeepCubeA 神经网络模块
 source_contents:
   - "deepcubea_network.py"
   - "deepcubea_train.py"
+  - "deepcubea_generate_data.py"
   - "config.py"
 dependencies:
   - "wiki/abstract/huarongdao-env.md"
   - "wiki/abstract/docs/deepcubea-research.md"
   - "wiki/abstract/deepcubea-search.md"
 created_at: 2026-06-11 19:00:00
-updated_at: 2026-06-11 20:00:00
+updated_at: 2026-06-11 20:30:00
 ---
 # 摘要：DeepCubeA 神经网络模块
 
@@ -21,6 +22,7 @@ updated_at: 2026-06-11 20:00:00
 - **残差块**：FC(256)+ReLU → FC(256) → +input → ReLU
 - **训练方式**：近似值迭代 (AVI)，每 epoch 全量计算 J'(s) = min_a (1+J(A(s,a))) 作为 target（目标状态 J'=0），MSE loss + Adam 做 batch 训练
 - **AVI 发散**：函数逼近器 Bellman 备份误差累积的典型模式，无 target network 时 epoch 527 后 loss 从 0.014 升至 0.26
+- **数据生成/训练分离**：`deepcubea_generate_data.py` 独立生成训练数据并保存 `.npy`，`deepcubea_train.py` 从文件加载训练；`DEEPCUBEA_LOG_INTERVAL` 配置日志间隔，`DEEPCUBEA_TRAIN_DATA_PATH` 配置数据路径
 
 ## 首次训练（v1）
 
@@ -50,7 +52,7 @@ updated_at: 2026-06-11 20:00:00
 
 ## 内容概述
 
-> `deepcubea_network.py` 包含编码模块和网络类，提供 encode/encode_batch/decode/transition/DeepCubeANetwork。`deepcubea_train.py` 包含 generate_training_data（反向随机游走生成训练状态）、compute_targets（全量 Bellman 备份计算 J'(s)）、train（训练主循环 + checkpoint + loss 曲线）。训练数据从目标状态反向生成，去重在训练开始时执行。
+> `deepcubea_network.py` 包含编码模块和网络类，提供 encode/encode_batch/decode/transition/DeepCubeANetwork。`deepcubea_generate_data.py` 独立生成训练数据（反向随机游走 → 去重 → `.npy`），`deepcubea_train.py` 从 `.npy` 加载数据执行 AVI 训练。训练数据默认路径 `results/train_data/train_states.npy`，日志间隔由 `DEEPCUBEA_LOG_INTERVAL` 控制。
 
 ## 依赖与影响链
 
