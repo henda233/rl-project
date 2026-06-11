@@ -53,3 +53,4 @@ DEEPCUBEA_MODEL_PATH = ""               # 训练好的网络权重路径（运�
 DEEPCUBEA_LAMBDA = 1.0                  # 加权 A* 系数，λ·g(s) + h(s)
 DEEPCUBEA_NUM_TEST_STATES = 100         # 评估测试状态总数（均分到短/中/长三档）
 DEEPCUBEA_MAX_EXPAND_NODES = 10000    # 最大展开节点数，超限判失败
+DEEPCUBEA_INFERENCE_USE_GPU = False  # A* 搜索推理时是否使用 GPU（与训练 DEEPCUBEA_USE_GPU 解耦）

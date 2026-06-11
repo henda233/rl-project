@@ -130,7 +130,7 @@ def train():
 
     pbar = tqdm(range(1, DEEPCUBEA_ITERATIONS + 1), desc="Training")
     for epoch in pbar:
-        pbar.set_description("Computing targets")
+        #pbar.set_description("Computing targets")
         targets = compute_targets(states, network, device).to(device)
         pbar.set_description("Training")
 

@@ -5,7 +5,7 @@ Usage:
 """
 import sys
 import numpy as np
-from deepcubea_search import load_model, weighted_astar, _GOAL_GRID, GOAL_STATE
+from deepcubea_search import load_model, weighted_astar, _GOAL_GRID, _GOAL_BYTES
 from deepcubea_network import transition
 
 
@@ -57,7 +57,7 @@ if __name__ == "__main__":
                 break
 
         if grid is not None:
-            at_goal = tuple(int(x) for x in grid) == GOAL_STATE
+            at_goal = grid.tobytes() == _GOAL_BYTES
             status = "OK" if at_goal else "FAIL (path does not reach goal)"
             print(f"{status} [{desc}]: length={len(path)}, expanded={expanded}")
             if not at_goal:

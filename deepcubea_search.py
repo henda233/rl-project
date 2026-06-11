@@ -4,20 +4,22 @@ import torch
 from config import (
     HUARONGDAO_N, DEEPCUBEA_T_MIN, DEEPCUBEA_T_MAX,
     DEEPCUBEA_LAMBDA, DEEPCUBEA_MODEL_PATH, DEEPCUBEA_MAX_EXPAND_NODES,
-    DEEPCUBEA_NUM_TEST_STATES,
+    DEEPCUBEA_NUM_TEST_STATES, DEEPCUBEA_INFERENCE_USE_GPU,
 )
-from deepcubea_network import DeepCubeANetwork, transition, encode
+from deepcubea_network import DeepCubeANetwork, transition, get_children
 
 N2 = HUARONGDAO_N * HUARONGDAO_N
-GOAL_STATE = tuple(list(range(1, N2)) + [0])
-_GOAL_GRID = np.array(list(GOAL_STATE), dtype=np.int32)
+_GOAL_GRID = np.array(list(range(1, N2)) + [0], dtype=np.int32)
+_GOAL_BYTES = _GOAL_GRID.tobytes()
 
 
-def load_model(model_path=None):
+def load_model(model_path=None, use_gpu=None):
     path = model_path or DEEPCUBEA_MODEL_PATH
     if not path:
         raise ValueError("DEEPCUBEA_MODEL_PATH is empty, must specify model path")
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if use_gpu is None:
+        use_gpu = DEEPCUBEA_INFERENCE_USE_GPU
+    device = torch.device("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
     model = DeepCubeANetwork().to(device)
     model.load_state_dict(torch.load(path, map_location=device, weights_only=True))
     model.eval()
@@ -35,18 +37,21 @@ def weighted_astar(start_grid_flat, model, lambda_weight=None, max_expand=None):
     if max_expand is None:
         max_expand = DEEPCUBEA_MAX_EXPAND_NODES
 
-    start_tuple = tuple(int(x) for x in start_grid_flat)
+    start_bytes = start_grid_flat.tobytes()
 
-    if start_tuple == GOAL_STATE:
+    if start_bytes == _GOAL_BYTES:
         return [], 0
 
+    start_blank_idx = int(np.where(start_grid_flat == 0)[0][0])
+
     h_start = model.predict_j(start_grid_flat)
-    open_set = [(lambda_weight * 0 + h_start, 0, start_tuple)]
+    open_set = [(lambda_weight * 0 + h_start, 0, start_bytes)]
     tiebreaker = 1
 
-    came_from = {start_tuple: (None, None, 0)}
-    expanded = 0
+    # g_score: state_bytes → (g, parent_bytes, action, blank_idx)
+    g_score = {start_bytes: (0, None, None, start_blank_idx)}
     closed = set()
+    expanded = 0
 
     while open_set and expanded < max_expand:
         f_val, _, current = heapq.heappop(open_set)
@@ -56,47 +61,46 @@ def weighted_astar(start_grid_flat, model, lambda_weight=None, max_expand=None):
         closed.add(current)
         expanded += 1
 
-        _, _, g_current = came_from[current]
-        current_grid = np.array(list(current), dtype=np.int32)
+        g_current, _, _, blank_idx = g_score[current]
+        current_grid = np.frombuffer(current, dtype=np.int32).copy()
 
-        # Collect legal children and their grids for batched prediction
-        children = []  # list of (child_tuple, child_grid, action)
-        for action in range(4):
-            child_grid = transition(current_grid, action)
-            if child_grid is None:
-                continue
+        raw_children = get_children(current_grid, blank_idx)
 
-            child_tuple = tuple(int(x) for x in child_grid)
+        to_predict = []
+        for child_grid, action, new_blank_idx in raw_children:
+            child_bytes = child_grid.tobytes()
 
-            if child_tuple in closed or child_tuple in came_from:
+            if child_bytes in closed:
                 continue
 
             g_child = g_current + 1
 
-            if child_tuple == GOAL_STATE:
+            if child_bytes in g_score and g_child >= g_score[child_bytes][0]:
+                continue
+
+            if child_bytes == _GOAL_BYTES:
                 path = [action]
                 state = current
-                while came_from[state][0] is not None:
-                    parent, a, _ = came_from[state]
+                while g_score[state][1] is not None:
+                    _, parent, a, _ = g_score[state]
                     path.append(a)
                     state = parent
                 path.reverse()
                 return path, expanded
 
-            children.append((child_tuple, child_grid, action))
-            came_from[child_tuple] = (current, action, g_child)
+            g_score[child_bytes] = (g_child, current, action, new_blank_idx)
+            to_predict.append((child_bytes, child_grid, action))
 
-        if not children:
+        if not to_predict:
             continue
 
-        # Batch predict all children's heuristic values
-        child_grids = np.stack([c[1] for c in children])
+        child_grids = np.stack([c[1] for c in to_predict])
         h_values = model.predict_j_batch(child_grids).cpu().numpy()
 
-        for (child_tuple, _, _), h_child in zip(children, h_values):
-            _, _, g_child = came_from[child_tuple]
+        for (child_bytes, _, _), h_child in zip(to_predict, h_values):
+            g_child = g_score[child_bytes][0]
             f_child = lambda_weight * g_child + float(h_child)
-            heapq.heappush(open_set, (f_child, tiebreaker, child_tuple))
+            heapq.heappush(open_set, (f_child, tiebreaker, child_bytes))
             tiebreaker += 1
 
     return None, expanded

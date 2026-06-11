@@ -11,6 +11,29 @@ _DR = [-1, 1, 0, 0]
 _DC = [0, 0, -1, 1]
 
 
+def get_children(grid, blank_idx):
+    """返回所有合法子节点，一次调用消除 4 次 np.where。
+
+    Args:
+        grid: (N2,) numpy int32 array，当前状态（只读，不会被修改）
+        blank_idx: 空格在 grid 中的索引
+
+    Returns:
+        [(child_grid, action, new_blank_idx), ...] 仅合法子节点
+    """
+    r, c = blank_idx // N, blank_idx % N
+    children = []
+    for action, (dr, dc) in enumerate([(-1, 0), (1, 0), (0, -1), (0, 1)]):
+        nr, nc = r + dr, c + dc
+        if 0 <= nr < N and 0 <= nc < N:
+            new_idx = nr * N + nc
+            child = grid.copy()
+            child[blank_idx] = grid[new_idx]
+            child[new_idx] = 0
+            children.append((child, action, new_idx))
+    return children
+
+
 def encode(grid_flat):
     """Convert flat grid (N2,) int → one-hot (INPUT_DIM,) tensor.
 
@@ -106,12 +129,12 @@ class DeepCubeANetwork(nn.Module):
         """Single grid → scalar J (no_grad)."""
         device = next(self.parameters()).device
         one_hot = encode(grid_flat).to(device)
-        with torch.no_grad():
+        with torch.inference_mode():
             return self.forward(one_hot.unsqueeze(0)).item()
 
     def predict_j_batch(self, grids_flat):
         """Batch grids (B, N2) numpy → (B,) tensor J (no_grad)."""
         device = next(self.parameters()).device
         one_hot = encode_batch(grids_flat).to(device)
-        with torch.no_grad():
+        with torch.inference_mode():
             return self.forward(one_hot)
