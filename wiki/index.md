@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-11 18:50
+> 🔄 最后同步：2026-06-11 20:00
 
 ## 模块总览
 
@@ -14,7 +14,8 @@
 | `RND 实现` | [🔗](./abstract/rnd-impl.md) | 内在奖励探索，β 线性衰减，滑动缓冲区训练预测网络 | ✅ |
 | `切换华容道` | [🔗](./abstract/switch-to-huarongdao.md) | PPO/RND Agent 从 MountainCar 切换为华容道的破坏性改造记录 | ✅ |
 | `DeepCubeA 研究` | [🔗](./abstract/docs/deepcubea-research.md) | 启发式搜索优于RL，近似值迭代训练DNN逼近J(s)，加权A*求解 | ✅ |
-| `DeepCubeA 网络模块` | [🔗](./abstract/deepcubea-network.md) | 256维one-hot编解码、纯函数transition、2FC+4ResBlock网络、predict_j接口 | ✅ |
+| `DeepCubeA 网络模块` | [🔗](./abstract/deepcubea-network.md) | v1: 4k states/T100/LR1e-3 → loss=0.014; v2待训: 50k states/T500/LR1e-4 | ⚠️ |
+| `DeepCubeA 加权 A* 搜索` | [🔗](./abstract/deepcubea-search.md) | 加权A*求解、三档评估、批量预测优化；v1模型Short档胜率32% | ⚠️ |
 | `Gym 参考` | [🔗](./abstract/gymnasium/agent-training.md) / [custom-env](./abstract/gymnasium/custom-env.md) / [recording](./abstract/gymnasium/recording-agent.md) | ε-greedy 训练循环、Env 继承规范、Record wrapper | ✅ |
 | `参考代码` | [🔗](./abstract/examples/actor-critic-example.md) / [rl-utils](./abstract/examples/rl-utils.md) | PolicyNet/ValueNet、ReplayBuffer、on-policy 循环 | ✅ |
 
@@ -27,11 +28,12 @@
 | `实现数字华容道环境` | [🔗](./plan/implement-huarongdao-env.md) | completed |
 | `PPO/RND Agent 切换华容道` | [🔗](./plan/switch-to-huarongdao.md) | completed |
 | `DeepCubeA 神经网络训练` | [🔗](./plan/deepcubea-network.md) | completed（best loss=0.0138, epoch 527） |
-| `DeepCubeA 加权 A* 搜索` | [🔗](./plan/deepcubea-search.md) | waiting |
+| `DeepCubeA 加权 A* 搜索` | [🔗](./plan/deepcubea-search.md) | completed（v1 评估完成，待 v2 重训后复评） |
 
 ## TODO列表
 
-- [ ] 执行DeepCubeA 加权 A* 搜索（`wiki/plan/deepcubea-search.md`）
+- [ ] DeepCubeA 第二次训练（v2 参数：T~U(10,500), 50k states, LR=1e-4, 2k iter）
+- [ ] 训练完成后重新运行 A* 评估（λ=1.0 → 若胜率提升再试 λ=0.3）
 
 ## 笔记
 
@@ -56,8 +58,10 @@
 
 稀疏奖励（每步 -1）下 on-policy Actor-Critic 不收敛，经四次塑形尝试后 Potential-Based Φ=k·pos 收敛。核心教训：从"堆砌更多信号"转向"最简势函数"。此经验已应用于华容道奖励设计。
 
-## 全局更新日志（近5条）
+## 全局更新日志（近7条）
 
+- `06-11 20:00`: DeepCubeA v1 评估 + 参数调整 —— A* Short 档胜率仅 32%（T~U(1,100)/5k states/LR1e-3 导致 J(s) 泛化差）；分析根因（随机游走低效、状态覆盖不足、AVI 震荡）；`config.py` 训练参数调整为 v2（T~U(10,500)/50k states/LR1e-4/2k iter）；搜索模块批量预测优化；WIKI 全部更新
+- `06-11 19:30`: DeepCubeA 加权 A* 搜索完成 —— `config.py` 追加搜索参数（MODEL_PATH/LAMBDA等）、`deepcubea_search.py`（weighted_astar + evaluate）、`deepcubea_search_test.py`（评估脚本）、`deepcubea_search_smoke_test.py`（单元验证）；抽象和 index 已更新
 - `06-11 18:50`: DeepCubeA 训练完成 —— `deepcubea_train.py`（S4-S5）、执行训练（S6, 4131 状态/1000 epoch/best loss=0.0138）、WIKI 更新（S7）；观察到 AVI 发散，保留 best checkpoint，更新 index 笔记
 - `06-11 19:00`: DeepCubeA S1-S3 完成 —— `config.py` 追加 DEEPCUBEA_* 参数（GPU 默认 True）、`deepcubea_network.py`（encode/decode/transition/DeepCubeANetwork），测试全通过；创建 `wiki/abstract/deepcubea-network.md`，更新 index 计划状态
 - `06-11 18:00`: 制定 DeepCubeA 复现执行计划 —— 创建 `wiki/request/deepcubea-reproduction.md`、`wiki/plan/deepcubea-network.md`、`wiki/plan/deepcubea-search.md`、`wiki/abstract/docs/deepcubea-research.md`

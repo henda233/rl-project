@@ -36,12 +36,19 @@ HUARONGDAO_ILLEGAL_STEP_REWARD = -2   # 非法动作每步奖励
 
 # ==================== DeepCubeA Training（deepcubea_train.py 使用） ====================
 
-DEEPCUBEA_T_MIN = 1                    # 随机游走最小步数
-DEEPCUBEA_T_MAX = 100                   # 随机游走最大步数
-DEEPCUBEA_TRAIN_SET_SIZE = 5000       # 训练集状态数
-DEEPCUBEA_LR = 1e-3                    # 学习率
+DEEPCUBEA_T_MIN = 10                   # 随机游走最小步数（跳过琐碎近距状态）
+DEEPCUBEA_T_MAX = 500                   # 随机游走最大步数（覆盖中远距离状态）
+DEEPCUBEA_TRAIN_SET_SIZE = 50000      # 训练集状态数（适配 RTX 3050 4GB）
+DEEPCUBEA_LR = 1e-4                    # 学习率（压低 Bellman 备份震荡）
 DEEPCUBEA_BATCH_SIZE = 256             # 批大小
-DEEPCUBEA_ITERATIONS = 1000           # 值迭代总轮数（epoch）
+DEEPCUBEA_ITERATIONS = 2000           # 值迭代总轮数（epoch）
 DEEPCUBEA_HIDDEN_DIM = 256             # 隐藏层维度
 DEEPCUBEA_USE_GPU = True               # 是否使用 GPU
 DEEPCUBEA_CHECKPOINT_INTERVAL = 500   # checkpoint 保存间隔（epoch）
+
+# ==================== DeepCubeA Search（deepcubea_search.py 使用） ====================
+
+DEEPCUBEA_MODEL_PATH = ""               # 训练好的网络权重路径（运行时必须显式指定）
+DEEPCUBEA_LAMBDA = 1.0                  # 加权 A* 系数，λ·g(s) + h(s)
+DEEPCUBEA_NUM_TEST_STATES = 100         # 评估测试状态总数（均分到短/中/长三档）
+DEEPCUBEA_MAX_EXPAND_NODES = 10000    # 最大展开节点数，超限判失败

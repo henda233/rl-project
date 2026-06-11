@@ -1,7 +1,7 @@
 ---
 plan_name: DeepCubeA 加权 A* 搜索
 related_request: "wiki/request/deepcubea-reproduction.md"
-status: waiting
+status: completed
 created_at: 2026-06-11 18:00:00
 ---
 # 执行计划：DeepCubeA 加权 A* 搜索求解
@@ -37,19 +37,20 @@ f(s) = λ · g(s) + h(s)
 
 | 步骤ID | 任务描述 | 前置依赖 | 交付物 | 状态 |
 |---|---|---|---|---|
-| `S1` | config.py 添加搜索参数（λ、测试数、最大展开节点） | 无 | `config.py`（修改） | 待完成 |
-| `S2` | 实现加权 A* 搜索（优先队列 + 路径回溯） | `S1`, 网络就绪 | `deepcubea_search.py`（搜索函数） | 待完成 |
-| `S3` | 实现评估管线：生成测试状态 → 批量求解 → 统计胜率 | `S2` | `deepcubea_search.py`（评估函数） | 待完成 |
-| `S4` | 运行评估并输出结果 | `S3` | 评估报告（控制台输出） | 待完成 |
-| `S5` | 编写摘要、更新 index | `S4` | `wiki/abstract/deepcubea-search.md` | 待完成 |
+| `S1` | config.py 添加搜索参数（λ、测试数、最大展开节点、模型路径） | 无 | `config.py`（修改） | 已完成 |
+| `S2` | 实现加权 A* 搜索（优先队列 + 路径回溯） | `S1`, 网络就绪 | `deepcubea_search.py`（搜索函数） | 已完成 |
+| `S3` | 实现评估管线：生成测试状态 → 批量求解 → 统计胜率 | `S2` | `deepcubea_search.py`（评估函数） | 已完成 |
+| `S4` | 编写测试脚本供用户运行 | `S3` | `deepcubea_search_test.py`、`deepcubea_search_smoke_test.py` | 已完成 |
+| `S5` | 编写摘要、更新 index | `S4` | `wiki/abstract/deepcubea-search.md` | 已完成 |
 
 ## 新增配置参数
 
 ```python
 # DeepCubeA Search
-DEEPCUBEA_LAMBDA = 0.3
-DEEPCUBEA_NUM_TEST_STATES = 100
-DEEPCUBEA_MAX_EXPAND_NODES = 100000
+DEEPCUBEA_MODEL_PATH = ""               # 必须运行时显式指定
+DEEPCUBEA_LAMBDA = 1.0                  # 加权 A* 系数（v1 评估后从 0.3 改为 1.0）
+DEEPCUBEA_NUM_TEST_STATES = 100         # 均分到短/中/长三档
+DEEPCUBEA_MAX_EXPAND_NODES = 10_000     # 超限判失败
 ```
 
 ## 风险与约束
@@ -64,3 +65,9 @@ DEEPCUBEA_MAX_EXPAND_NODES = 100000
 1. 手动构造简单状态（距目标 3-5 步），验证搜索能找到正确解
 2. 在 100 个随机打乱状态上运行批量评估
 3. 统计胜率、平均求解步数、平均展开节点数
+
+## 执行记录
+
+- `2026-06-11 18:00`: 计划已生成
+- `2026-06-11 19:30`: 全部步骤完成 —— S1 添加 4 个搜索参数+模型路径到 config.py、S2 实现 weighted_astar、S3 实现 evaluate 分档评估、S4 编写测试脚本、S5 摘要和 index 更新
+- `2026-06-11 20:00`: v1 评估（λ=0.3, max_expand=10k）—— Short 档胜率 32%，J(s) 泛化差；批量预测优化 applied；训练参数反馈调整为 v2（50k states/T500/LR1e-4/2k iter）；待 v2 训练完成后复评
