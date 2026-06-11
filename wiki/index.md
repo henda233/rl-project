@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-11 21:15
+> 🔄 最后同步：2026-06-11 23:59
 
 ## 模块总览
 
@@ -14,8 +14,9 @@
 | `RND 实现` | [🔗](./abstract/rnd-impl.md) | 内在奖励探索，β 线性衰减，滑动缓冲区训练预测网络 | ✅ |
 | `切换华容道` | [🔗](./abstract/switch-to-huarongdao.md) | PPO/RND Agent 从 MountainCar 切换为华容道的破坏性改造记录 | ✅ |
 | `DeepCubeA 研究` | [🔗](./abstract/docs/deepcubea-research.md) | 启发式搜索优于RL，近似值迭代训练DNN逼近J(s)，加权A*求解 | ✅ |
-| `DeepCubeA 网络模块` | [🔗](./abstract/deepcubea-network.md) | v1: 4k states/T100/LR1e-3 → loss=0.014; v2待训: 50k states/T500/LR1e-4 | ⚠️ |
-| `DeepCubeA 加权 A* 搜索` | [🔗](./abstract/deepcubea-search.md) | 加权A*求解、三档评估、批量预测优化；v1模型Short档胜率32% | ⚠️ |
+| `DeepCubeA 网络模块` | [🔗](./abstract/deepcubea-network.md) | v1: 4k states/T100/LR1e-3 → loss=0.014; v2: 200k states/T500/LR1e-4/hidden=512/batch=1024/批量更新+固定目标 | ✅ |
+| `DeepCubeA 加权 A* 搜索` | [🔗](./abstract/deepcubea-search.md) | 加权A*求解、三档评估、批量预测优化；推理设备解耦、bytes状态、可直接运行搜索评估 | ✅ |
+| `DeepCubeA 批量更新 + 固定目标 AVI` | [🔗](./abstract/deepcubea-target-network.md) | 外层 Bellman 备份固定 J'(s)，内层早停监督学习，无额外 target network | ✅ |
 | `Gym 参考` | [🔗](./abstract/gymnasium/agent-training.md) / [custom-env](./abstract/gymnasium/custom-env.md) / [recording](./abstract/gymnasium/recording-agent.md) | ε-greedy 训练循环、Env 继承规范、Record wrapper | ✅ |
 | `参考代码` | [🔗](./abstract/examples/actor-critic-example.md) / [rl-utils](./abstract/examples/rl-utils.md) | PolicyNet/ValueNet、ReplayBuffer、on-policy 循环 | ✅ |
 
@@ -31,15 +32,26 @@
 | `DeepCubeA 加权 A* 搜索` | [🔗](./plan/deepcubea-search.md) | completed（v1 评估完成，待 v2 重训后复评） |
 | `DeepCubeA 数据生成/训练分离` | [🔗](./plan/deepcubea-data-training-separation.md) | completed |
 | `DeepCubeA A* 搜索推理优化` | [🔗](./plan/deepcubea-inference-device-config.md) | completed（S1-S7 全部完成） |
+| `DeepCubeA 批量更新 + 固定目标 AVI` | [🔗](./plan/deepcubea-target-network.md) | completed |
 
 ## TODO列表
 
-（空）
+- [x] 执行`DeepCubeA 批量更新 + 固定目标 AVI`计划（已完成 2026-06-11）
 
 ## 笔记
 
+### AVI 训练发散实证（2026-06-11）
+
+v2 参数（T~U(10,500)/200k states/LR=1e-4/5000 epoch/hidden=512）在 epoch 2331 出现**突发性 loss 爆炸**：
+
+- best=0.052390 → loss 瞬间跃迁至 ~5.6×10^21
+- 根因：Bellman 备份正反馈雪崩。网络输出层无界（Linear→scalar），系统性高估偏置在关键 hub 状态累积越过临界点后，逐 epoch 放大：J↑ → target = 1+J↑ → 拟合更大 target → J↑↑
+- 2331 epoch 属于"潜伏期"——网络维持近似 self-consistency（loss≈0.05），但偏置在缓慢累积。这与 v1 epoch 527 拐点属同种模式，只是 v2 更大的训练集延缓了崩溃
+- **结论**：无 target network 时 AVI 训练不可持续，loss 低是暂时的、不可靠的 self-consistency 指标；target network 通过冻结 Bellman 备份目标打断正反馈循环
+
 ### DeepCubeA AVI 训练发散
-近似值迭代用函数逼近器做 Bellman 备份，目标值每 epoch 变化导致 loss 发散（类似 DQN 无 target network）。缓解：target network、增大训练集、更慢学习率。当前保留最佳 checkpoint（epoch 527, loss=0.0138）。
+近似值迭代用函数逼近器做 Bellman 备份，每 epoch 重算目标导致"移动靶"，已实证 loss 爆炸至 10^21。解决方案：批量更新 + 固定目标（文献原版），外层 Bellman 备份固定 J'(s)，内层早停监督学习。
+→ **计划已制定**（`wiki/plan/deepcubea-target-network.md`），OUTER_ITER=20/INNER_EPOCHS=100/PATIENCE=10。
 
 ### 核心设计决策
 - **非法动作惩罚替代 Action Masking**：采样阶段不屏蔽非法动作，环境区分合法(-1)/非法(-2)奖励。Action Masking 导致采样/更新分布不一致，ratio 溢出 NaN。
@@ -51,6 +63,10 @@
 
 ## 全局更新日志（近10条）
 
+- `06-11 23:59`: 一致性检查 —— 删除冗余测试文件（test_deepcubea_network/test_deepcubea_training）；deepcubea_search_test 合并到搜索模块；修复 wiki 摘要与代码的不一致（PPO/RND/DeepCubeA 配置值、过时引用、v2参数表）
+- `06-11 23:16`: DeepCubeA 批量更新 + 固定目标 AVI 完成 —— config 三参数替换；训练循环重构（外层 Bellman 备份 + 内层早停 + 双层 tqdm + saw-tooth 曲线）；烟雾测试通过（100 states, 早停 25/30 epoch）
+- `06-11 22:30`: AVI 训练发散实证记录 —— v2 参数 epoch 2331 loss 爆炸至 10^21，分析 Bellman 备份正反馈雪崩机制
+- `06-11 21:45`: DeepCubeA Target Network 计划制定（已废弃） —— hard/soft 双模式，freq=500/tau=0.005
 - `06-11 21:15`: DeepCubeA A* 搜索推理优化 —— S1-S7 全部执行；批量转移+bytes状态+g_score字典+GPU可配+inference_mode；smoke test 通过
 - `06-11 20:45`: DeepCubeA 训练进度改用 tqdm —— epoch 循环 tqdm，移除 `DEEPCUBEA_LOG_INTERVAL`
 - `06-11 20:30`: DeepCubeA 数据生成/训练分离 —— S1 config 新增参数；S2 `deepcubea_generate_data.py`（tqdm+去重+.npy）；S3 `deepcubea_train.py` 从 .npy 加载
@@ -60,4 +76,3 @@
 - `06-11 18:00`: 制定 DeepCubeA 复现执行计划 —— 创建 request/plan/abstract；index 更新
 - `06-11 17:40`: 清理 MountainCar 废弃代码及对应 WIKI 摘要/计划/需求；重写保留摘要
 - `06-10 17:30`: Action Masking 回退为非法动作惩罚 —— 因 NaN 问题移除采样 mask
-- `06-10 16:20`: PPO/RND 切换华容道执行完毕 —— ppo_agent.py/ppo_rnd_agent.py 破坏性改造完成

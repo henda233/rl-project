@@ -8,7 +8,7 @@ dependencies:
   - "wiki/request/rnd-implementation.md"
   - "wiki/plan/implement-rnd.md"
 created_at: 2026-06-05 20:00:00
-updated_at: 2026-06-11 17:40:00
+updated_at: 2026-06-11 23:59:00
 ---
 # 摘要：RND 探索算法实现
 
@@ -25,7 +25,7 @@ updated_at: 2026-06-11 17:40:00
 
 > `ppo_rnd_agent.py` 自包含完整 RND+PPO 实现：RNDTargetNet（固定随机投影）、RNDPredictorNet（可训练）、RNDModule（归一化+训练）、滑动状态缓冲区、PPO 训练循环（PolicyNet/ValueNet/GAE/clipped objective）。
 >
-> `config.py` RND 配置段：RND_HIDDEN_DIM=256、RND_OUTPUT_DIM=256、RND_LR=1e-3、RND_BETA=100、RND_BETA_END=1.0、RND_BETA_DECAY=0.05、RND_EPOCHS=5、RND_NUM_EPISODES=10000、RND_BUFFER_SIZE=5。
+> `config.py` RND 配置段：RND_HIDDEN_DIM=256、RND_OUTPUT_DIM=256、RND_LR=1e-3、RND_BETA=1、RND_BETA_END=1、RND_BETA_DECAY=0.005、RND_EPOCHS=5、RND_NUM_EPISODES=10000、RND_BUFFER_SIZE=1。
 
 ## 关键设计决策
 

@@ -8,7 +8,7 @@ dependencies:
   - "wiki/plan/implement-ppo.md"
   - "wiki/abstract/huarongdao-env.md"
 created_at: 2026-06-04 23:50:00
-updated_at: 2026-06-11 17:40:00
+updated_at: 2026-06-11 23:59:00
 ---
 # 摘要：PPO 算法实现
 
@@ -27,7 +27,7 @@ updated_at: 2026-06-11 17:40:00
 
 > `ppo_agent.py` 包含完整 PPO 实现：PolicyNet/ValueNet、compute_gae（含 dones 截断）、PPO 类（clipped objective + advantage norm + entropy bonus）、on-policy 训练循环、moving_average/evaluate/plot_return 工具函数、main 入口。
 >
-> `config.py` 包含 PPO_ 前缀参数组（PPO_HIDDEN_DIM=256, PPO_GAMMA=0.98, PPO_LMBDA=0.95, PPO_EPOCHS=10, PPO_EPS=0.2, PPO_NUM_EPISODES=5000, PPO_EVAL_INTERVAL=200, PPO_ENTROPY_COEF=0.01, PPO_USE_GPU=False）和 HUARONGDAO_ 前缀环境参数。
+> `config.py` 包含 PPO_ 前缀参数组（PPO_HIDDEN_DIM=256, PPO_GAMMA=0.98, PPO_LMBDA=0.95, PPO_EPOCHS=10, PPO_EPS=0.2, PPO_NUM_EPISODES=10000, PPO_EVAL_INTERVAL=1000, PPO_ENTROPY_COEF=0.05, PPO_USE_GPU=False）和 HUARONGDAO_ 前缀环境参数。
 
 ## 关键设计决策
 

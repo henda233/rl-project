@@ -9,7 +9,7 @@
 
 **技术栈**：Python 3.12, numpy, pytorch, tqdm, matplotlib, gymnasium
 
-**核心代码**：`env_digital_huarongdao.py`（环境）、`ppo_agent.py`（PPO）、`ppo_rnd_agent.py`（PPO+RND）、`config.py`（配置）、`deepcubea_network.py`（网络）、`deepcubea_train.py`（训练）、`deepcubea_search.py`（搜索）
+**核心代码**：`env_digital_huarongdao.py`（环境）、`ppo_agent.py`（PPO）、`ppo_rnd_agent.py`（PPO+RND）、`config.py`（配置）、`deepcubea_network.py`（网络/编码/转移）、`deepcubea_train.py`（批量更新+固定目标AVI训练）、`deepcubea_search.py`（加权A*搜索+评估）、`deepcubea_generate_data.py`（训练数据生成）、`deepcubea_smoke_test.py`（训练冒烟测试）、`deepcubea_search_smoke_test.py`（搜索冒烟测试）
 
 ## WIKI 结构
 
@@ -35,7 +35,8 @@ wiki/
 │   ├── huarongdao-render-test.md
 │   ├── switch-to-huarongdao.md
 │   ├── deepcubea-network.md
-│   └── deepcubea-search.md
+│   ├── deepcubea-search.md
+│   └── deepcubea-target-network.md
 ├── request/           // 用户需求
 └── plan/              // 执行计划
 ```
@@ -49,7 +50,8 @@ wiki/
 5. **了解 DeepCubeA 方法** → `abstract/docs/deepcubea-research.md`
 6. **了解 DeepCubeA 网络** → `abstract/deepcubea-network.md`
 7. **了解 DeepCubeA 搜索** → `abstract/deepcubea-search.md`
-8. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
+8. **了解 DeepCubeA 训练** → `abstract/deepcubea-target-network.md`
+9. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
 
 ## 当前状态
 
@@ -61,3 +63,5 @@ wiki/
 - ✅ DeepCubeA 加权 A* 搜索完成（v1 Short 档胜率 32%，v2 待重训）
 - ✅ DeepCubeA 数据生成/训练分离
 - ✅ DeepCubeA A* 搜索推理优化（批量转移 + bytes 状态 + GPU 可配）
+- ✅ DeepCubeA 批量更新 + 固定目标 AVI（外层 Bellman 备份 + 内层早停监督学习）
+- ✅ 代码/测试清理（合并搜索测试到主模块，删除冗余旧测试）

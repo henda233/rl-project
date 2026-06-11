@@ -8,7 +8,7 @@ dependencies:
   - "wiki/abstract/docs/deepcubea-research.md"
   - "wiki/abstract/huarongdao-env.md"
 created_at: 2026-06-11 19:30:00
-updated_at: 2026-06-11 21:15:00
+updated_at: 2026-06-11 23:59:00
 ---
 # 摘要：DeepCubeA 加权 A* 搜索
 
@@ -22,7 +22,6 @@ updated_at: 2026-06-11 21:15:00
 - **g_score 数据结构**：`{bytes: (g, parent, action, blank_idx)}` 替代 `came_from` + `closed` 双结构，blank_idx 随状态存储省去展开时 `np.where`，支持更短路径覆盖
 - **inference_mode**：`torch.inference_mode()` 替代 `torch.no_grad()`，进一步降低推理开销
 - **推理设备解耦**：`DEEPCUBEA_INFERENCE_USE_GPU` 独立于 `DEEPCUBEA_USE_GPU`，默认 False（CPU 推理避免小 batch GPU kernel launch 开销）
-- **状态表示**：tuple(int) 用于 hash，numpy 数组用于 transition 计算
 - **三档评估**：`[T_MIN, T_MAX]` 均分为 Short/Medium/Long 三档，每档 `NUM_TEST_STATES/3` 个状态，42 固定种子随机游走生成
 - **失败判定**：展开节点数超过 `MAX_EXPAND_NODES` 或队列为空 → 判为求解失败
 - **模型加载**：`DEEPCUBEA_MODEL_PATH` 默认空字符串，运行时必须显式指定，防止静默加载错误模型
@@ -41,7 +40,7 @@ updated_at: 2026-06-11 21:15:00
 
 ## 内容概述
 
-> `deepcubea_search.py` 包含 `load_model`、`weighted_astar`（批量预测优化）、`evaluate`（进度指示 + 分档统计）三个核心函数。测试脚本 `deepcubea_search_smoke_test.py`（正向随机游走构造单元验证）和 `deepcubea_search_test.py`（完整评估）供用户手动执行。
+> `deepcubea_search.py` 包含 `load_model`、`weighted_astar`（批量预测优化）、`evaluate`（进度指示 + 分档统计）三个核心函数，以及 `if __name__ == "__main__"` 入口可直接运行评估。`deepcubea_search_smoke_test.py`（正向随机游走构造单元验证）供用户手动执行。
 
 ## 依赖与影响链
 

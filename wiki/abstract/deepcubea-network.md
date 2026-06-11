@@ -10,7 +10,7 @@ dependencies:
   - "wiki/abstract/docs/deepcubea-research.md"
   - "wiki/abstract/deepcubea-search.md"
 created_at: 2026-06-11 19:00:00
-updated_at: 2026-06-11 20:45:00
+updated_at: 2026-06-11 23:59:00
 ---
 # 摘要：DeepCubeA 神经网络模块
 
@@ -20,8 +20,8 @@ updated_at: 2026-06-11 20:45:00
 - **纯函数状态转移**：`transition(grid_flat, action)` 无环境副作用，非法动作返回 None，action 语义与环境一致（0=上,1=下,2=左,3=右）
 - **网络结构**：Input(256) → FC(256)+ReLU → FC(256)+ReLU → 4×ResBlock → FC(1)，输出标量 J(s)
 - **残差块**：FC(256)+ReLU → FC(256) → +input → ReLU
-- **训练方式**：近似值迭代 (AVI)，每 epoch 全量计算 J'(s) = min_a (1+J(A(s,a))) 作为 target（目标状态 J'=0），MSE loss + Adam 做 batch 训练；tqdm 进度条显示 epoch 进度、当前 loss 和 best loss，"Computing targets" 阶段在 desc 中体现
-- **AVI 发散**：函数逼近器 Bellman 备份误差累积的典型模式，无 target network 时 epoch 527 后 loss 从 0.014 升至 0.26
+- **训练方式**：批量更新 + 固定目标 AVI（外层 Bellman 备份固定 J'(s)=min_a(1+J(A(s,a))) → 内层固定目标监督学习 + patience 早停），双层 tqdm 显示进度，saw-tooth loss 曲线用竖线标记外层边界
+- **AVI 发散**：原训练（每 epoch 重算目标）在 epoch 2331 出现 loss 爆炸至 10^21，根因为 Bellman 备份正反馈雪崩；改为批量更新 + 固定目标后解决
 - **数据生成/训练分离**：`deepcubea_generate_data.py` 独立生成训练数据并保存 `.npy`，`deepcubea_train.py` 从文件加载训练；`DEEPCUBEA_TRAIN_DATA_PATH` 配置数据路径；`DEEPCUBEA_LOG_INTERVAL` 已移除（tqdm 替代）
 
 ## 首次训练（v1）
@@ -36,23 +36,25 @@ updated_at: 2026-06-11 20:45:00
 
 **评估反馈**：A* 搜索 Short 档（1-34 步）胜率仅 32%，仅能解极近距离状态。根因——(1) 随机游走 100 步实际最优距离仅 ~15-20，训练集集中在一个小半径球内；(2) 4k 去重状态不足以泛化；(3) LR=1e-3 震荡大。
 
-## 第二次训练（v2，待执行）
+## 第二次训练（v2，已执行：批量更新 + 固定目标 AVI）
 
-| 参数 | 旧值 | 新值 | 调整依据 |
-|---|---|---|---|
-| T_MIN | 1 | 10 | 跳过琐碎近距状态，容量分配给有意义的 |
-| T_MAX | 100 | 500 | 抵达更远状态，覆盖中远距离区域 |
-| TRAIN_SET_SIZE | 5,000 | 50,000 | 10 倍覆盖，适配 RTX 3050 4GB 显存 |
-| LR | 1e-3 | 1e-4 | 压低 Bellman 备份震荡 |
-| ITERATIONS | 1,000 | 2,000 | 更多迭代补偿更大训练集 |
-| BATCH_SIZE | 256 | 256（不变） | |
-| HIDDEN_DIM | 256 | 256（不变） | |
+| 参数 | 值 | 说明 |
+|---|---|---|
+| T_MIN | 10 | 跳过琐碎近距状态 |
+| T_MAX | 500 | 覆盖中远距离区域 |
+| TRAIN_SET_SIZE | 200,000 | 适配 RTX 3050 4GB 显存 |
+| LR | 1e-4 | 压低 Bellman 备份震荡 |
+| OUTER_ITER | 20 | Bellman 备份轮数 |
+| INNER_EPOCHS | 100 | 每轮最大训练 epoch |
+| INNER_PATIENCE | 10 | 内层早停 patence |
+| BATCH_SIZE | 1,024 | |
+| HIDDEN_DIM | 512 | |
 
-**预估**：RTX 3050 峰值显存 ~450 MB，训练时间 40-60 分钟。
+**训练方式**：外层 Bellman 备份固定 J'(s) + 内层早停监督学习（详见 `deepcubea-target-network.md`）。总 epoch 上限 = 20 × 100 = 2000，目标计算从 2000 次降至 ≤20 次。
 
 ## 内容概述
 
-> `deepcubea_network.py` 包含编码模块和网络类，提供 encode/encode_batch/decode/transition/DeepCubeANetwork。`deepcubea_generate_data.py` 独立生成训练数据（反向随机游走 → 去重 → `.npy`），`deepcubea_train.py` 从 `.npy` 加载数据执行 AVI 训练。训练数据默认路径 `results/train_data/train_states.npy`，日志间隔由 `DEEPCUBEA_LOG_INTERVAL` 控制。
+> `deepcubea_network.py` 包含编码模块和网络类，提供 encode/encode_batch/decode/transition/get_children/DeepCubeANetwork。`deepcubea_generate_data.py` 独立生成训练数据（反向随机游走 → 去重 → `.npy`），`deepcubea_train.py` 从 `.npy` 加载数据执行批量更新 + 固定目标 AVI 训练（外层 Bellman 备份 + 内层早停监督学习）。训练数据默认路径 `results/train_data/train_states.npy`，训练进度由双层 tqdm 显示。
 
 ## 依赖与影响链
 

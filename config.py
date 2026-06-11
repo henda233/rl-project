@@ -41,11 +41,12 @@ DEEPCUBEA_T_MAX = 500                   # 随机游走最大步数（覆盖中�
 DEEPCUBEA_TRAIN_SET_SIZE = 200000      # 训练集状态数（适配 RTX 3050 4GB）
 DEEPCUBEA_LR = 1e-4                    # 学习率（压低 Bellman 备份震荡）
 DEEPCUBEA_BATCH_SIZE = 1024             # 批大小
-DEEPCUBEA_ITERATIONS = 2000           # 值迭代总轮数（epoch）
+DEEPCUBEA_OUTER_ITER = 20             # Bellman 备份轮数（外层迭代）
+DEEPCUBEA_INNER_EPOCHS = 100          # 每轮最大训练 epoch（内层迭代）
+DEEPCUBEA_INNER_PATIENCE = 10         # 内层早停 patience（loss 连续不改善 epoch 数）
 DEEPCUBEA_HIDDEN_DIM = 512             # 隐藏层维度
 DEEPCUBEA_USE_GPU = True               # 是否使用 GPU
 DEEPCUBEA_TRAIN_DATA_PATH = "results/train_data/train_states.npy"  # 训练数据保存/加载路径
-DEEPCUBEA_CHECKPOINT_INTERVAL = 500   # checkpoint 保存间隔（epoch）
 
 # ==================== DeepCubeA Search（deepcubea_search.py 使用） ====================
 
