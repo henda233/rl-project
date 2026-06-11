@@ -38,11 +38,11 @@ HUARONGDAO_ILLEGAL_STEP_REWARD = -2   # 非法动作每步奖励
 
 DEEPCUBEA_T_MIN = 10                   # 随机游走最小步数（跳过琐碎近距状态）
 DEEPCUBEA_T_MAX = 500                   # 随机游走最大步数（覆盖中远距离状态）
-DEEPCUBEA_TRAIN_SET_SIZE = 50000      # 训练集状态数（适配 RTX 3050 4GB）
+DEEPCUBEA_TRAIN_SET_SIZE = 200000      # 训练集状态数（适配 RTX 3050 4GB）
 DEEPCUBEA_LR = 1e-4                    # 学习率（压低 Bellman 备份震荡）
-DEEPCUBEA_BATCH_SIZE = 256             # 批大小
+DEEPCUBEA_BATCH_SIZE = 1024             # 批大小
 DEEPCUBEA_ITERATIONS = 2000           # 值迭代总轮数（epoch）
-DEEPCUBEA_HIDDEN_DIM = 256             # 隐藏层维度
+DEEPCUBEA_HIDDEN_DIM = 512             # 隐藏层维度
 DEEPCUBEA_USE_GPU = True               # 是否使用 GPU
 DEEPCUBEA_TRAIN_DATA_PATH = "results/train_data/train_states.npy"  # 训练数据保存/加载路径
 DEEPCUBEA_CHECKPOINT_INTERVAL = 500   # checkpoint 保存间隔（epoch）
