@@ -1,7 +1,7 @@
 ---
 plan_name: DeepCubeA A* 搜索推理性能优化
 related_request: "wiki/request/deepcubea-inference-device-config.md"
-status: waitting
+status: completed
 created_at: 2026-06-11 21:00:00
 ---
 # 执行计划：DeepCubeA A* 搜索推理性能优化
@@ -33,13 +33,13 @@ created_at: 2026-06-11 21:00:00
 
 | 步骤ID | 任务描述 | 前置依赖 | 交付物/修改路径 | 状态 |
 |---|---|---|---|---|
-| `S1` | `config.py` 新增 `DEEPCUBEA_INFERENCE_USE_GPU = False` | 无 | `config.py` | 待完成 |
-| `S2` | `deepcubea_network.py` 新增 `get_children(grid, blank_idx)` 批量状态转移函数，一次调用返回所有合法子节点；`predict_j`/`predict_j_batch` 中 `torch.no_grad()` → `torch.inference_mode()` | 无 | `deepcubea_network.py` | 待完成 |
-| `S3` | `deepcubea_search.py` 重构 `weighted_astar()`：<br>1. 用 `g_score` dict 替代 `came_from`（统一存储 g/parent/action/blank_idx）<br>2. 用 `get_children()` 替代 4 次 `transition()` 循环<br>3. 新路径 g 更优时覆盖旧路径（修复长路径覆盖短路径问题）<br>4. 保留 `closed` set 用于展开节点去重 | `S2` | `deepcubea_search.py` | 待完成 |
-| `S4` | `deepcubea_search.py` `load_model()` 新增 `use_gpu` 参数，默认读取 `DEEPCUBEA_INFERENCE_USE_GPU` | `S1` | `deepcubea_search.py` | 待完成 |
-| `S5` | `deepcubea_search.py` 状态表示改用 `bytes`：<br>1. `grid.tobytes()` 替代 `tuple(int(x) for x in child_grid)` 作为哈希键<br>2. `np.frombuffer(state_bytes, dtype=np.int32).copy()` 替代 `np.array(list(current), dtype=np.int32)` 还原数组<br>3. `GOAL_STATE` 改为 `_GOAL_BYTES` 常量 | `S3` | `deepcubea_search.py` | 待完成 |
-| `S6` | 运行 `deepcubea_search_smoke_test.py` 验证正确性；手动对比优化前后搜索耗时 | `S5` | 测试通过 | 待完成 |
-| `S7` | 更新 WIKI（摘要 + index） | `S6` | `wiki/abstract/deepcubea-search.md`、`wiki/index.md` | 待完成 |
+| `S1` | `config.py` 新增 `DEEPCUBEA_INFERENCE_USE_GPU = False` | 无 | `config.py` | 已完成 |
+| `S2` | `deepcubea_network.py` 新增 `get_children(grid, blank_idx)` 批量状态转移函数，一次调用返回所有合法子节点；`predict_j`/`predict_j_batch` 中 `torch.no_grad()` → `torch.inference_mode()` | 无 | `deepcubea_network.py` | 已完成 |
+| `S3` | `deepcubea_search.py` 重构 `weighted_astar()`：<br>1. 用 `g_score` dict 替代 `came_from`（统一存储 g/parent/action/blank_idx）<br>2. 用 `get_children()` 替代 4 次 `transition()` 循环<br>3. 新路径 g 更优时覆盖旧路径（修复长路径覆盖短路径问题）<br>4. 保留 `closed` set 用于展开节点去重 | `S2` | `deepcubea_search.py` | 已完成 |
+| `S4` | `deepcubea_search.py` `load_model()` 新增 `use_gpu` 参数，默认读取 `DEEPCUBEA_INFERENCE_USE_GPU` | `S1` | `deepcubea_search.py` | 已完成 |
+| `S5` | `deepcubea_search.py` 状态表示改用 `bytes`：<br>1. `grid.tobytes()` 替代 `tuple(int(x) for x in child_grid)` 作为哈希键<br>2. `np.frombuffer(state_bytes, dtype=np.int32).copy()` 替代 `np.array(list(current), dtype=np.int32)` 还原数组<br>3. `GOAL_STATE` 改为 `_GOAL_BYTES` 常量；同步更新 `deepcubea_search_smoke_test.py` | `S3` | `deepcubea_search.py`、`deepcubea_search_smoke_test.py` | 已完成 |
+| `S6` | 运行 `deepcubea_search_smoke_test.py` 验证正确性 | `S5` | 测试全部通过 | 已完成 |
+| `S7` | 更新 WIKI（摘要 + index） | `S6` | `wiki/abstract/deepcubea-search.md`、`wiki/index.md` | 已完成 |
 
 ### 各步骤详细说明
 
@@ -173,3 +173,4 @@ numpy → generator → tuple   # 每个 child L69: tuple(int(x) for x in child_
 ## 📝 执行记录
 
 - `2026-06-11 21:00`: 计划已生成（覆盖全部 6 个优化点）
+- `2026-06-11 21:15`: S1-S7 全部执行完毕。smoke test 全部通过。

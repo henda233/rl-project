@@ -8,7 +8,7 @@ dependencies:
   - "wiki/abstract/docs/deepcubea-research.md"
   - "wiki/abstract/huarongdao-env.md"
 created_at: 2026-06-11 19:30:00
-updated_at: 2026-06-11 20:00:00
+updated_at: 2026-06-11 21:15:00
 ---
 # 摘要：DeepCubeA 加权 A* 搜索
 
@@ -17,6 +17,11 @@ updated_at: 2026-06-11 20:00:00
 - **加权公式**：f(s) = λ·g(s) + h(s)，h(s) = J(s) 由训练好的 DeepCubeANetwork 提供
 - **搜索算法**：基于 heapq 优先队列的标准 A*，每次展开 f 最小节点，通过 came_from 字典回溯路径
 - **批量预测优化**：每次节点展开将所有子节点一次性送入 `predict_j_batch`，N 次前向 → 1 次，理论提速 ~4 倍
+- **状态表示**：bytes（`grid.tobytes()`）用于 hash，`np.frombuffer().copy()` 还原，比 tuple 哈希快 C 级别 vs Python 级别
+- **批量状态转移**：`get_children(grid, blank_idx)` 一次调用返回所有合法子节点，消除 4 次 `np.where` 和独立 `transition()` 调用
+- **g_score 数据结构**：`{bytes: (g, parent, action, blank_idx)}` 替代 `came_from` + `closed` 双结构，blank_idx 随状态存储省去展开时 `np.where`，支持更短路径覆盖
+- **inference_mode**：`torch.inference_mode()` 替代 `torch.no_grad()`，进一步降低推理开销
+- **推理设备解耦**：`DEEPCUBEA_INFERENCE_USE_GPU` 独立于 `DEEPCUBEA_USE_GPU`，默认 False（CPU 推理避免小 batch GPU kernel launch 开销）
 - **状态表示**：tuple(int) 用于 hash，numpy 数组用于 transition 计算
 - **三档评估**：`[T_MIN, T_MAX]` 均分为 Short/Medium/Long 三档，每档 `NUM_TEST_STATES/3` 个状态，42 固定种子随机游走生成
 - **失败判定**：展开节点数超过 `MAX_EXPAND_NODES` 或队列为空 → 判为求解失败
@@ -41,5 +46,5 @@ updated_at: 2026-06-11 20:00:00
 ## 依赖与影响链
 
 - **上游依赖**：`config.py`（DEEPCUBEA_MODEL_PATH/LAMBDA/NUM_TEST_STATES/MAX_EXPAND_NODES + T_MIN/T_MAX）、`deepcubea_network.py`（DeepCubeANetwork/transition/encode）
-- **下游被依赖**：`wiki/plan/deepcubea-search.md`（重新评估待新模型训练完成）
-- **变更扩散评估**：低（搜索模块独立，不修改环境和网络代码）
+- **下游被依赖**：`wiki/plan/deepcubea-inference-device-config.md`（推理优化已完成）
+- **变更扩散评估**：低（搜索模块独立，不修改环境和网络结构）
