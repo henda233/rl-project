@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-12 17:35
+> 🔄 最后同步：2026-06-12 20:00
 
 ## 模块总览
 
@@ -14,6 +14,7 @@
 | `RND 实现` | [🔗](./abstract/rnd-impl.md) | 内在奖励探索，β 线性衰减，滑动缓冲区训练预测网络 | ✅ |
 | `切换华容道` | [🔗](./abstract/switch-to-huarongdao.md) | PPO/RND Agent 从 MountainCar 切换为华容道的破坏性改造记录 | ✅ |
 | `DeepCubeA 研究` | [🔗](./abstract/docs/deepcubea-research.md) | 启发式搜索优于RL，近似值迭代训练DNN逼近J(s)，加权A*求解 | ✅ |
+| `DeepCubeA 训练 Loss 曲线分析` | [🔗](./abstract/docs/deepcubea-loss-analysis.md) | 内层收敛/外层发散，saw-tooth 峰值 0.03→0.35，Bellman 备份正反馈雪崩诊断 | ✅ |
 | `DeepCubeA 网络模块` | [🔗](./abstract/deepcubea-network.md) | v1-v3: BN; v4: BN→LayerNorm，消除 batch_size≥2 约束 + 删除所有 .eval() | ✅ |
 | `DeepCubeA 加权 A* 搜索` | [🔗](./abstract/deepcubea-search.md) | 加权A*求解、三档评估、批量预测优化；推理设备解耦、bytes状态、可直接运行搜索评估 | ✅ |
 | `DeepCubeA 批量更新 + 固定目标 AVI` | [🔗](./abstract/deepcubea-target-network.md) | 外层 Bellman 备份固定 J'(s)，内层早停监督学习，无额外 target network | ✅ |
@@ -36,11 +37,11 @@
 | `DeepCubeA 批量更新 + 固定目标 AVI` | [🔗](./plan/deepcubea-target-network.md) | completed |
 | `DeepCubeA 在线采样 + 轻量验证` | [🔗](./plan/deepcubea-online-sampling-validation.md) | completed |
 | `DeepCubeA BN → LayerNorm 替换` | [🔗](./plan/deepcubea-bn-to-ln.md) | completed |
+| `DeepCubeA 论文阈值 θ_c 更新` | [🔗](./plan/deepcubea-target-threshold.md) | waitting |
 
 ## TODO列表
 
-- [x] 运行 `deepcubea_online_smoke_test.py` 验证在线采样 + 三项指标
-- [x] 重新训练模型（在线采样 + LN），对比新旧模型分箱 MSE 和 A* 胜率
+- [ ] 执行`DeepCubeA 论文阈值 θ_c 更新`计划。
 
 ## 笔记
 
@@ -63,6 +64,8 @@ v2 参数（T~U(10,500)/200k states/LR=1e-4/5000 epoch/hidden=512）在 epoch 23
 
 ## 全局更新日志（近10条）
 
+- `06-12 20:00`: DeepCubeA 论文阈值 θ_c 更新计划制定 —— 引入独立 target_network 计算 Bellman 目标，仅当 val_loss < ε 时更新 θ_c。新增 loss 曲线分析文档（docs/DeepCubeA训练loss曲线分析.md）及其摘要，作为计划核心依据
+- `06-12 20:00`: 保存其他 AI 对 DeepCubeA 训练 loss 曲线的分析至 wiki —— 诊断内层收敛/外层发散、Bellman 备份正反馈雪崩。创建 docs 内容 + abstract 摘要 + index 索引
 - `06-12 17:35`: wiki 记忆库一致性更新 —— readme.md/index.md/online-validation 摘要中 BN→LN 过期引用清理
 - `06-12 17:30`: BN → LayerNorm 替换完成 —— deepcubea_network.py: BN→LN+注释保留变量名; 删除 predict_j/predict_j_batch/compute_targets/load_model/_compute_bellman_errors 共5处 .eval(); 更新 network/online-validation 摘要
 - `06-12 17:00`: BN batch_size=1 崩溃复现确认 —— `reproduce_bn_crash.py` 单样本 forward 触发 ValueError，根因与远程训练一致；更新 network/online-validation 摘要 + BN→LN 计划执行记录
