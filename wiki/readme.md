@@ -36,7 +36,8 @@ wiki/
 │   ├── switch-to-huarongdao.md
 │   ├── deepcubea-network.md
 │   ├── deepcubea-search.md
-│   └── deepcubea-target-network.md
+│   ├── deepcubea-target-network.md
+│   └── deepcubea-online-validation.md
 ├── request/           // 用户需求
 └── plan/              // 执行计划
 ```
@@ -51,7 +52,8 @@ wiki/
 6. **了解 DeepCubeA 网络** → `abstract/deepcubea-network.md`
 7. **了解 DeepCubeA 搜索** → `abstract/deepcubea-search.md`
 8. **了解 DeepCubeA 训练** → `abstract/deepcubea-target-network.md`
-9. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
+9. **了解 DeepCubeA 在线采样** → `abstract/deepcubea-online-validation.md`
+10. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
 
 ## 当前状态
 
@@ -64,4 +66,6 @@ wiki/
 - ✅ DeepCubeA 数据生成/训练分离
 - ✅ DeepCubeA A* 搜索推理优化（批量转移 + bytes 状态 + GPU 可配）
 - ✅ DeepCubeA 批量更新 + 固定目标 AVI（外层 Bellman 备份 + 内层早停监督学习）
+- ✅ DeepCubeA 在线采样 + 轻量验证（在线混合采样 + BN + 分层 Bellman MSE + 贪心展开 + 完整 A*）
+- ✅ config.py 参数整理（在线采样迁入 Training；Validation 合并入 Search）
 - ✅ 代码/测试清理（合并搜索测试到主模块，删除冗余旧测试）

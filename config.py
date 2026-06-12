@@ -36,32 +36,29 @@ HUARONGDAO_ILLEGAL_STEP_REWARD = -2   # 非法动作每步奖励
 
 # ==================== DeepCubeA Training（deepcubea_train.py 使用） ====================
 
-DEEPCUBEA_T_MIN = 10                   # 随机游走最小步数（跳过琐碎近距状态）
+DEEPCUBEA_T_MIN = 3                   # 随机游走最小步数（跳过琐碎近距状态）
 DEEPCUBEA_T_MAX = 500                   # 随机游走最大步数（覆盖中远距离状态）
 DEEPCUBEA_TRAIN_SET_SIZE = 200000      # 训练集状态数（适配 RTX 3050 4GB）
 DEEPCUBEA_LR = 1e-4                    # 学习率（压低 Bellman 备份震荡）
-DEEPCUBEA_BATCH_SIZE = 1024             # 批大小
-DEEPCUBEA_OUTER_ITER = 20             # Bellman 备份轮数（外层迭代）
-DEEPCUBEA_INNER_EPOCHS = 100          # 每轮最大训练 epoch（内层迭代）
-DEEPCUBEA_INNER_PATIENCE = 10         # 内层早停 patience（loss 连续不改善 epoch 数）
+DEEPCUBEA_BATCH_SIZE = 2048             # 批大小
+DEEPCUBEA_OUTER_ITER = 50             # Bellman 备份轮数（外层迭代）
+DEEPCUBEA_INNER_EPOCHS = 1000          # 每轮最大训练 epoch（内层迭代）
+DEEPCUBEA_INNER_PATIENCE = 200         # 内层早停 patience（loss 连续不改善 epoch 数）
 DEEPCUBEA_HIDDEN_DIM = 512             # 隐藏层维度
 DEEPCUBEA_USE_GPU = True               # 是否使用 GPU
 DEEPCUBEA_TRAIN_DATA_PATH = "results/train_data/train_states.npy"  # 训练数据保存/加载路径
-
-# ==================== DeepCubeA Search（deepcubea_search.py 使用） ====================
-
-DEEPCUBEA_MODEL_PATH = ""               # 训练好的网络权重路径（运行时必须显式指定）
-DEEPCUBEA_LAMBDA = 1.0                  # 加权 A* 系数，λ·g(s) + h(s)
-DEEPCUBEA_NUM_TEST_STATES = 100         # 评估测试状态总数（均分到短/中/长三档）
-DEEPCUBEA_MAX_EXPAND_NODES = 10000    # 最大展开节点数，超限判失败
-DEEPCUBEA_INFERENCE_USE_GPU = False  # A* 搜索推理时是否使用 GPU（与训练 DEEPCUBEA_USE_GPU 解耦）
 DEEPCUBEA_ONLINE_BATCH = 20000        # 每轮外层在线生成状态数 B
 DEEPCUBEA_BASE_BATCH = 5000           # 每轮外层从基础数据集采样状态数 B'，设 0 为纯在线
 DEEPCUBEA_OUTER_SEED = 42             # 外层迭代随机种子基准值
 DEEPCUBEA_SEED_OVERLAP = 0.3          # 相邻轮次 base 采样重叠比例
 
-# ==================== DeepCubeA Validation（deepcubea_search.py 使用） ====================
+# ==================== DeepCubeA Search / Validation（deepcubea_search.py 使用） ====================
 
+DEEPCUBEA_MODEL_PATH = ""               # 训练好的网络权重路径（运行时必须显式指定）
+DEEPCUBEA_LAMBDA = 1.0                  # 加权 A* 系数，λ·g(s) + h(s)
+DEEPCUBEA_NUM_TEST_STATES = 100         # 评估测试状态总数（均分到短/中/长三档）
+DEEPCUBEA_MAX_EXPAND_NODES = 10000    # 最大展开节点数，超限判失败
+DEEPCUBEA_INFERENCE_USE_GPU = True  # A* 搜索推理时是否使用 GPU（与训练 DEEPCUBEA_USE_GPU 解耦）
 DEEPCUBEA_VAL_SIZE = 3000             # 验证集状态数量
 DEEPCUBEA_VAL_SEED = 12345            # 验证集生成随机种子
 DEEPCUBEA_VAL_NUM_STRATA = 5          # 分层数（K 范围均分为等宽区间）

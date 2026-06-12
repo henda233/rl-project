@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-12 14:30
+> 🔄 最后同步：2026-06-12 15:10
 
 ## 模块总览
 
@@ -52,10 +52,6 @@ v2 参数（T~U(10,500)/200k states/LR=1e-4/5000 epoch/hidden=512）在 epoch 23
 - 2331 epoch 属于"潜伏期"——网络维持近似 self-consistency（loss≈0.05），但偏置在缓慢累积。这与 v1 epoch 527 拐点属同种模式，只是 v2 更大的训练集延缓了崩溃
 - **结论**：无 target network 时 AVI 训练不可持续，loss 低是暂时的、不可靠的 self-consistency 指标；target network 通过冻结 Bellman 备份目标打断正反馈循环
 
-### DeepCubeA AVI 训练发散
-近似值迭代用函数逼近器做 Bellman 备份，每 epoch 重算目标导致"移动靶"，已实证 loss 爆炸至 10^21。解决方案：批量更新 + 固定目标（文献原版），外层 Bellman 备份固定 J'(s)，内层早停监督学习。
-→ **计划已制定**（`wiki/plan/deepcubea-target-network.md`），OUTER_ITER=20/INNER_EPOCHS=100/PATIENCE=10。
-
 ### 核心设计决策
 - **非法动作惩罚替代 Action Masking**：采样阶段不屏蔽非法动作，环境区分合法(-1)/非法(-2)奖励。Action Masking 导致采样/更新分布不一致，ratio 溢出 NaN。
 - **模型保存标准**：最优模型按原始 return（不含好奇心奖励）选择，避免内在奖励污染模型选择。
@@ -66,6 +62,7 @@ v2 参数（T~U(10,500)/200k states/LR=1e-4/5000 epoch/hidden=512）在 epoch 23
 
 ## 全局更新日志（近10条）
 
+- `06-12 15:00`: config.py 参数整理 —— 在线采样 4 参数迁入 Training 分组；Validation 分组合并入 Search 分组；命名/结构保持
 - `06-12 14:30`: DeepCubeA 在线采样 + 轻量验证完成 —— S1-S9 全部执行；config 新增 10 个参数；deepcubea_utils.py 共享状态生成；network 添加 BN(仅 FC 隐藏层)+self.eval()；train 在线混合采样(B+B'+overlap)；search 三分层验证(Bellman MSE+贪心展开+完整A*)；generate_data 重构调用 utils；冒烟测试脚本交付
 - `06-12 12:00`: DeepCubeA 在线采样 + 轻量验证计划制定
 - `06-11 23:59`: 一致性检查 —— 删除冗余测试文件（test_deepcubea_network/test_deepcubea_training）；deepcubea_search_test 合并到搜索模块；修复 wiki 摘要与代码的不一致（PPO/RND/DeepCubeA 配置值、过时引用、v2参数表）
@@ -75,9 +72,3 @@ v2 参数（T~U(10,500)/200k states/LR=1e-4/5000 epoch/hidden=512）在 epoch 23
 - `06-11 21:15`: DeepCubeA A* 搜索推理优化 —— S1-S7 全部执行；批量转移+bytes状态+g_score字典+GPU可配+inference_mode；smoke test 通过
 - `06-11 20:45`: DeepCubeA 训练进度改用 tqdm —— epoch 循环 tqdm，移除 `DEEPCUBEA_LOG_INTERVAL`
 - `06-11 20:30`: DeepCubeA 数据生成/训练分离 —— S1 config 新增参数；S2 `deepcubea_generate_data.py`（tqdm+去重+.npy）；S3 `deepcubea_train.py` 从 .npy 加载
-- `06-11 20:00`: DeepCubeA v1 评估 + v2 参数调整 —— A* Short 档胜率仅 32%；根因：随机游走低效、状态覆盖不足、AVI 震荡；v2: T~U(10,500)/50k states/LR1e-4/2k iter
-- `06-11 19:30`: DeepCubeA 加权 A* 搜索完成 —— `deepcubea_search.py` + 评估/测试脚本；WIKI 更新
-- `06-11 18:50`: DeepCubeA 训练完成 —— 4131 状态/1000 epoch/best loss=0.0138；AVI 发散，保留 best checkpoint
-- `06-11 18:00`: 制定 DeepCubeA 复现执行计划 —— 创建 request/plan/abstract；index 更新
-- `06-11 17:40`: 清理 MountainCar 废弃代码及对应 WIKI 摘要/计划/需求；重写保留摘要
-- `06-10 17:30`: Action Masking 回退为非法动作惩罚 —— 因 NaN 问题移除采样 mask
