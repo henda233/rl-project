@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-11 23:59
+> 🔄 最后同步：2026-06-12 12:00
 
 ## 模块总览
 
@@ -33,10 +33,11 @@
 | `DeepCubeA 数据生成/训练分离` | [🔗](./plan/deepcubea-data-training-separation.md) | completed |
 | `DeepCubeA A* 搜索推理优化` | [🔗](./plan/deepcubea-inference-device-config.md) | completed（S1-S7 全部完成） |
 | `DeepCubeA 批量更新 + 固定目标 AVI` | [🔗](./plan/deepcubea-target-network.md) | completed |
+| `DeepCubeA 在线采样 + 轻量验证` | [🔗](./plan/deepcubea-online-sampling-validation.md) | waitting |
 
 ## TODO列表
 
-- [x] 执行`DeepCubeA 批量更新 + 固定目标 AVI`计划（已完成 2026-06-11）
+- [ ] 执行`DeepCubeA 在线采样 + 轻量验证`计划
 
 ## 笔记
 
@@ -63,6 +64,7 @@ v2 参数（T~U(10,500)/200k states/LR=1e-4/5000 epoch/hidden=512）在 epoch 23
 
 ## 全局更新日志（近10条）
 
+- `06-12 12:00`: DeepCubeA 在线采样 + 轻量验证计划制定 —— 混合在线采样(B/B')+种子可控+分箱Bellman MSE+贪心展开+完整A*三档评估；决策：不做ε阈值、K保持500、验证集动态生成、默认轻量+flag完整A*、BN纳入计划，容量扩展用户独立调整
 - `06-11 23:59`: 一致性检查 —— 删除冗余测试文件（test_deepcubea_network/test_deepcubea_training）；deepcubea_search_test 合并到搜索模块；修复 wiki 摘要与代码的不一致（PPO/RND/DeepCubeA 配置值、过时引用、v2参数表）
 - `06-11 23:16`: DeepCubeA 批量更新 + 固定目标 AVI 完成 —— config 三参数替换；训练循环重构（外层 Bellman 备份 + 内层早停 + 双层 tqdm + saw-tooth 曲线）；烟雾测试通过（100 states, 早停 25/30 epoch）
 - `06-11 22:30`: AVI 训练发散实证记录 —— v2 参数 epoch 2331 loss 爆炸至 10^21，分析 Bellman 备份正反馈雪崩机制
