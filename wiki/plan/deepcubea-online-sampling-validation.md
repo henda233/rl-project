@@ -1,7 +1,7 @@
 ---
 plan_name: deepcubea-online-sampling-validation
 related_request: "wiki/request/deepcubea-online-sampling-validation.md"
-status: waitting
+status: completed
 created_at: 2026-06-12 12:00:00
 ---
 # 执行计划：DeepCubeA 在线采样 + 轻量验证指标
@@ -63,13 +63,15 @@ created_at: 2026-06-12 12:00:00
 
 | 步骤ID | 任务描述 | 前置依赖 | 交付物/修改路径 | 状态 |
 |---|---|---|---|---|
-| S1 | config.py 新增在线采样与验证参数 | 无 | `config.py` | 待完成 |
-| S2 | deepcubea_network.py 添加 Batch Normalization | 无 | `deepcubea_network.py` | 待完成 |
-| S3 | deepcubea_train.py 实现在线混合采样训练循环 | S1 | `deepcubea_train.py` | 待完成 |
-| S4 | deepcubea_search.py 新增方案 B：分箱 Bellman MSE（默认模式） | S1 | `deepcubea_search.py` | 待完成 |
-| S5 | deepcubea_search.py 新增方案 C：贪心展开节点数（flag 控制） | S4 | `deepcubea_search.py` | 待完成 |
-| S6 | deepcubea_search.py 保留方案 D：完整 A\* 三档评估（flag 控制） | S4 | `deepcubea_search.py` | 待完成 |
-| S7 | 冒烟测试：在线采样训练 + 三项指标评估 | S2, S3, S6 | 无新增文件 | 待完成 |
+| S1 | config.py 新增在线采样与验证参数 | 无 | `config.py` | 已完成 |
+| S2 | 新建 deepcubea_utils.py 共享状态生成 | 无 | `deepcubea_utils.py` | 已完成 |
+| S3 | deepcubea_network.py 添加 BN + self.eval() | 无 | `deepcubea_network.py` | 已完成 |
+| S4 | deepcubea_train.py 在线混合采样训练循环 | S1, S2, S3 | `deepcubea_train.py` | 已完成 |
+| S5 | deepcubea_search.py 方案 B：分层 Bellman MSE | S1, S2 | `deepcubea_search.py` | 已完成 |
+| S6 | deepcubea_search.py 方案 C：贪心展开 | S1, S5 | `deepcubea_search.py` | 已完成 |
+| S7 | deepcubea_search.py 方案 D + 入口重构 | S1, S5 | `deepcubea_search.py` | 已完成 |
+| S8 | deepcubea_generate_data.py 重构调用 utils | S2 | `deepcubea_generate_data.py` | 已完成 |
+| S9 | 冒烟测试脚本 | S3, S4, S7 | `deepcubea_online_smoke_test.py` | 已完成 |
 
 ### S1 详情 — Config 参数新增
 
@@ -180,3 +182,5 @@ for outer_iter in range(OUTER_ITER):
 ## 📝 执行记录
 
 - `2026-06-12 12:00`: 计划已生成，基于 DeepCubeA 文献与优化方向文档讨论后制定
+- `2026-06-12 14:00`: 执行前用户确认关键决策 —— 残差块不加BN、predict_j加self.eval()、分层等宽采样、取消CLI flags改用config、手动触发验证、共享代码抽到deepcubea_utils.py、SEED_OVERLAP控制base采样跨轮保留比例
+- `2026-06-12 14:30`: 全部步骤完成 —— BN仅加在FC隐藏层(Linear→BN→ReLU)；在线混合采样B+B'+重叠base；分层Bellman MSE(等宽strata)；贪心展开(truncated A*)；完整A*保留；生成数据重构调用utils；冒烟测试脚本(smoke-scale参数)

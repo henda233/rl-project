@@ -110,7 +110,9 @@ class DeepCubeANetwork(nn.Module):
         if hidden_dim is None:
             hidden_dim = DEEPCUBEA_HIDDEN_DIM
         self.fc1 = nn.Linear(INPUT_DIM, hidden_dim)
+        self.bn1 = nn.BatchNorm1d(hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.bn2 = nn.BatchNorm1d(hidden_dim)
         self.res_blocks = nn.ModuleList(
             [ResidualBlock(hidden_dim) for _ in range(num_res_blocks)]
         )
@@ -119,14 +121,15 @@ class DeepCubeANetwork(nn.Module):
 
     def forward(self, x):
         """x: (B, INPUT_DIM) one-hot tensor → (B,) scalar J values."""
-        out = self.relu(self.fc1(x))
-        out = self.relu(self.fc2(out))
+        out = self.relu(self.bn1(self.fc1(x)))
+        out = self.relu(self.bn2(self.fc2(out)))
         for res_block in self.res_blocks:
             out = res_block(out)
         return self.output(out).squeeze(-1)
 
     def predict_j(self, grid_flat):
         """Single grid → scalar J (no_grad)."""
+        self.eval()
         device = next(self.parameters()).device
         one_hot = encode(grid_flat).to(device)
         with torch.inference_mode():
@@ -134,6 +137,7 @@ class DeepCubeANetwork(nn.Module):
 
     def predict_j_batch(self, grids_flat):
         """Batch grids (B, N2) numpy → (B,) tensor J (no_grad)."""
+        self.eval()
         device = next(self.parameters()).device
         one_hot = encode_batch(grids_flat).to(device)
         with torch.inference_mode():

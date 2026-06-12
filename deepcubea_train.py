@@ -22,6 +22,12 @@ from config import (
     DEEPCUBEA_INNER_PATIENCE,
     DEEPCUBEA_USE_GPU,
     DEEPCUBEA_TRAIN_DATA_PATH,
+    DEEPCUBEA_T_MIN,
+    DEEPCUBEA_T_MAX,
+    DEEPCUBEA_ONLINE_BATCH,
+    DEEPCUBEA_BASE_BATCH,
+    DEEPCUBEA_OUTER_SEED,
+    DEEPCUBEA_SEED_OVERLAP,
 )
 from deepcubea_network import (
     encode_batch,
@@ -30,6 +36,7 @@ from deepcubea_network import (
     N2,
     INPUT_DIM,
 )
+from deepcubea_utils import generate_scrambled_states
 
 GOAL_STATE = np.arange(N2, dtype=np.int32)
 
@@ -95,17 +102,18 @@ def train():
     )
     print(f"Device: {device}")
 
-    # ── Load training data ──
+    # ── Load base training data (used for mixed sampling) ──
     data_path = Path(DEEPCUBEA_TRAIN_DATA_PATH)
-    if not data_path.exists():
-        raise FileNotFoundError(
-            f"Training data not found: {data_path}\n"
-            "Run deepcubea_generate_data.py first."
-        )
-    states = np.load(data_path)
-    print(f"Loaded {len(states)} unique states from {data_path}")
-    goal_count = np.sum(np.all(states == GOAL_STATE, axis=1))
-    print(f"Goal state present: {goal_count > 0}")
+    if data_path.exists():
+        base_states = np.load(data_path)
+        print(f"Loaded {len(base_states)} base states from {data_path}")
+    else:
+        base_states = None
+        if DEEPCUBEA_BASE_BATCH > 0:
+            raise FileNotFoundError(
+                f"Base training data not found: {data_path}\n"
+                "Run deepcubea_generate_data.py first or set DEEPCUBEA_BASE_BATCH=0."
+            )
 
     # ── Results directory ──
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -116,9 +124,6 @@ def train():
     imgs_dir.mkdir(parents=True, exist_ok=True)
     print(f"Results: {results_dir}")
 
-    # ── Pre-encode training states (reused across all outer iterations) ──
-    states_onehot = encode_batch(states).to(device)
-
     # ── Network & optimizer ──
     network = DeepCubeANetwork().to(device)
     optimizer = torch.optim.Adam(network.parameters(), lr=DEEPCUBEA_LR)
@@ -126,21 +131,53 @@ def train():
     param_count = sum(p.numel() for p in network.parameters())
     print(f"Parameters: {param_count:,}")
     print(f"Training: {DEEPCUBEA_OUTER_ITER} outer × max {DEEPCUBEA_INNER_EPOCHS} inner epochs (patience={DEEPCUBEA_INNER_PATIENCE})")
+    print(f"Online: B={DEEPCUBEA_ONLINE_BATCH}  Base: B'={DEEPCUBEA_BASE_BATCH}  Overlap={DEEPCUBEA_SEED_OVERLAP}")
 
     # ── Training: outer Bellman backup × inner fixed-target SGD ──
     all_losses = []
     outer_boundaries = []
+    prev_base_indices = None
 
     outer_pbar = tqdm(range(1, DEEPCUBEA_OUTER_ITER + 1), desc="Outer", unit=" round")
     for outer_iter in outer_pbar:
-        # Bellman backup: compute fixed targets J'(s)
-        targets = compute_targets(states, network, device).to(device)
+        # 1. Online generate B states
+        online_states = generate_scrambled_states(
+            DEEPCUBEA_ONLINE_BATCH, DEEPCUBEA_T_MIN, DEEPCUBEA_T_MAX,
+            seed=DEEPCUBEA_OUTER_SEED + outer_iter,
+        )
+
+        # 2. Sample B' base states with overlap
+        if base_states is not None and DEEPCUBEA_BASE_BATCH > 0:
+            carryover = int(DEEPCUBEA_BASE_BATCH * DEEPCUBEA_SEED_OVERLAP)
+            fresh = DEEPCUBEA_BASE_BATCH - carryover
+            rng = np.random.default_rng(DEEPCUBEA_OUTER_SEED + outer_iter)
+            mask = np.ones(len(base_states), dtype=bool)
+            if carryover > 0 and prev_base_indices is not None:
+                mask[prev_base_indices[:carryover]] = False
+            available = np.where(mask)[0]
+            new_idx = rng.choice(available, size=fresh, replace=False)
+            if carryover > 0 and prev_base_indices is not None:
+                base_idx = np.concatenate([prev_base_indices[:carryover], new_idx])
+            else:
+                base_idx = new_idx
+            prev_base_indices = base_idx
+            base_batch = base_states[base_idx]
+            train_states = np.concatenate([online_states, base_batch])
+        else:
+            train_states = online_states
+
+        # 3. Deduplicate + encode
+        train_states = np.unique(train_states, axis=0)
+        train_onehot = encode_batch(train_states).to(device)
+
+        # 4. Bellman backup: compute fixed targets J'(s)
+        targets = compute_targets(train_states, network, device).to(device)
 
         # Record outer boundary for saw-tooth plot (except first)
         if outer_iter > 1:
             outer_boundaries.append(len(all_losses))
 
-        # Inner fixed-target training with early stopping
+        # 5. Inner fixed-target training with early stopping
         best_inner_loss = float("inf")
         patience_left = DEEPCUBEA_INNER_PATIENCE
 
@@ -151,14 +188,14 @@ def train():
         )
         for inner_epoch in inner_pbar:
             network.train()
-            perm = torch.randperm(len(states), device=device)
+            perm = torch.randperm(len(train_states), device=device)
 
             total_loss = 0.0
             num_batches = 0
 
-            for i in range(0, len(states), DEEPCUBEA_BATCH_SIZE):
+            for i in range(0, len(train_states), DEEPCUBEA_BATCH_SIZE):
                 idx = perm[i : i + DEEPCUBEA_BATCH_SIZE]
-                batch_x = states_onehot[idx]
+                batch_x = train_onehot[idx]
                 batch_y = targets[idx]
 
                 pred = network(batch_x)
@@ -197,6 +234,7 @@ def train():
         outer_pbar.set_postfix(
             inner_final=f"{avg_loss:.6f}",
             inner_epochs=f"{inner_epoch}/{DEEPCUBEA_INNER_EPOCHS}",
+            train_size=f"{len(train_states)}",
         )
 
     # ── Final save ──

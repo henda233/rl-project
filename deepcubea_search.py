@@ -5,12 +5,18 @@ from config import (
     HUARONGDAO_N, DEEPCUBEA_T_MIN, DEEPCUBEA_T_MAX,
     DEEPCUBEA_LAMBDA, DEEPCUBEA_MODEL_PATH, DEEPCUBEA_MAX_EXPAND_NODES,
     DEEPCUBEA_NUM_TEST_STATES, DEEPCUBEA_INFERENCE_USE_GPU,
+    DEEPCUBEA_VAL_SIZE, DEEPCUBEA_VAL_SEED, DEEPCUBEA_VAL_NUM_STRATA,
+    DEEPCUBEA_VAL_GREEDY_EXPAND, DEEPCUBEA_VAL_ASTAR_FLAG, DEEPCUBEA_VAL_GREEDY_FLAG,
 )
-from deepcubea_network import DeepCubeANetwork, transition, get_children
+from deepcubea_network import DeepCubeANetwork, transition, get_children, encode_batch
+from deepcubea_utils import generate_stratified_states
 
 N2 = HUARONGDAO_N * HUARONGDAO_N
 _GOAL_GRID = np.array(list(range(1, N2)) + [0], dtype=np.int32)
 _GOAL_BYTES = _GOAL_GRID.tobytes()
+
+_DR = np.array([-1, 1, 0, 0])
+_DC = np.array([0, 0, -1, 1])
 
 
 def load_model(model_path=None, use_gpu=None):
@@ -121,6 +127,178 @@ def _generate_test_states(num_states, min_steps, max_steps, rng):
     return states
 
 
+def _compute_bellman_errors(states, model):
+    """Compute per-state squared Bellman error: (J(s) - min_a(1+J(A(s,a))))^2."""
+    B = len(states)
+    N = HUARONGDAO_N
+    blank_pos = np.argmin(states, axis=1)
+    blank_r = blank_pos // N
+    blank_c = blank_pos % N
+
+    model.eval()
+    device = next(model.parameters()).device
+
+    with torch.inference_mode():
+        x = encode_batch(states).to(device)
+        j_s = model(x).cpu().numpy()
+
+        best_j = np.full(B, np.inf, dtype=np.float32)
+
+        for a in range(4):
+            nr = blank_r + _DR[a]
+            nc = blank_c + _DC[a]
+            legal = (0 <= nr) & (nr < N) & (0 <= nc) & (nc < N)
+            if not legal.any():
+                continue
+
+            new_idx = nr * N + nc
+            legal_idx = np.where(legal)[0]
+
+            next_states = states.copy()
+            next_states[legal_idx, blank_pos[legal_idx]] = states[legal_idx, new_idx[legal_idx]]
+            next_states[legal_idx, new_idx[legal_idx]] = 0
+
+            x_next = encode_batch(next_states).to(device)
+            j_vals = model(x_next).cpu().numpy()
+            best_j[legal] = np.minimum(best_j[legal], j_vals[legal] + 1.0)
+
+    goal_mask = np.all(states == _GOAL_GRID, axis=1)
+    best_j[goal_mask] = 0.0
+    j_s[goal_mask] = 0.0
+    best_j[np.isinf(best_j)] = 0.0
+
+    return (j_s - best_j) ** 2
+
+
+def stratified_bellman_mse(model, val_size=None, t_min=None, t_max=None,
+                           num_strata=None, val_seed=None):
+    """方案 B: Stratified Bellman MSE — always runs.
+
+    Generates validation states stratified by scramble distance K,
+    computes per-state Bellman MSE, and reports per-stratum statistics.
+    K is a proxy for true optimal distance (not exact).
+    """
+    if val_size is None:
+        val_size = DEEPCUBEA_VAL_SIZE
+    if t_min is None:
+        t_min = DEEPCUBEA_T_MIN
+    if t_max is None:
+        t_max = DEEPCUBEA_T_MAX
+    if num_strata is None:
+        num_strata = DEEPCUBEA_VAL_NUM_STRATA
+    if val_seed is None:
+        val_seed = DEEPCUBEA_VAL_SEED
+
+    states, k_values, strata_bounds = generate_stratified_states(
+        val_size, t_min, t_max, num_strata, seed=val_seed,
+        start_state=_GOAL_GRID,
+    )
+
+    errors = _compute_bellman_errors(states, model)
+
+    print("=" * 72)
+    print("方案 B — Stratified Bellman MSE (K proxy)")
+    print("=" * 72)
+    print(f"States: {len(states)}  Strata: {num_strata}  K range: [{t_min}, {t_max}]")
+    print(f"Note: K = scramble steps, NOT true optimal distance")
+    print()
+    header = f"{'Stratum':<10} {'K Range':<16} {'Count':<8} {'Mean MSE':<12} {'Median MSE':<12} {'Std MSE':<12}"
+    print(header)
+    print("-" * len(header))
+
+    for i, (lo, hi) in enumerate(strata_bounds):
+        mask = (k_values >= lo) & (k_values <= hi)
+        stratum_errors = errors[mask]
+        print(f"{i+1:<10} [{lo}, {hi}]{'':<8} {len(stratum_errors):<8} "
+              f"{np.mean(stratum_errors):<12.6f} {np.median(stratum_errors):<12.6f} "
+              f"{np.std(stratum_errors):<12.6f}")
+
+    print("-" * len(header))
+    print(f"{'Overall':<10} {'':<16} {len(errors):<8} "
+          f"{np.mean(errors):<12.6f} {np.median(errors):<12.6f} "
+          f"{np.std(errors):<12.6f}")
+    print("=" * 72)
+
+
+def greedy_expansion_eval(model, val_size=None, t_min=None, t_max=None,
+                          num_strata=None, val_seed=None, max_expand=None,
+                          lambda_weight=None):
+    """方案 C: Greedy expansion evaluation (flag-controlled).
+
+    Runs truncated weighted A* (max_expand limit) on stratified
+    validation states, reporting per-stratum solve rate and
+    average expanded nodes.
+    """
+    if val_size is None:
+        val_size = DEEPCUBEA_VAL_SIZE
+    if t_min is None:
+        t_min = DEEPCUBEA_T_MIN
+    if t_max is None:
+        t_max = DEEPCUBEA_T_MAX
+    if num_strata is None:
+        num_strata = DEEPCUBEA_VAL_NUM_STRATA
+    if val_seed is None:
+        val_seed = DEEPCUBEA_VAL_SEED
+    if max_expand is None:
+        max_expand = DEEPCUBEA_VAL_GREEDY_EXPAND
+    if lambda_weight is None:
+        lambda_weight = DEEPCUBEA_LAMBDA
+
+    states, k_values, strata_bounds = generate_stratified_states(
+        val_size, t_min, t_max, num_strata, seed=val_seed,
+        start_state=_GOAL_GRID,
+    )
+
+    print("=" * 78)
+    print("方案 C — Greedy Expansion Evaluation (truncated A*)")
+    print("=" * 78)
+    print(f"States: {len(states)}  Max Expand: {max_expand}  Lambda: {lambda_weight}")
+    print()
+    header = f"{'Stratum':<10} {'K Range':<16} {'Count':<8} {'Solved':<10} {'Rate %':<10} {'Avg Expand':<12} {'Avg Len':<10}"
+    print(header)
+    print("-" * len(header))
+
+    total_solved = 0
+    total_expanded = 0
+    total_length = 0
+
+    for i, (lo, hi) in enumerate(strata_bounds):
+        mask = (k_values >= lo) & (k_values <= hi)
+        stratum_states = states[mask]
+        stratum_ks = k_values[mask]
+
+        solved = 0
+        expanded = 0
+        length = 0
+
+        for grid in stratum_states:
+            path, exp = weighted_astar(grid, model, lambda_weight, max_expand)
+            expanded += exp
+            if path is not None:
+                solved += 1
+                length += len(path)
+
+        total_solved += solved
+        total_expanded += expanded
+        total_length += length
+
+        n = len(stratum_states)
+        rate = solved / n * 100 if n > 0 else 0.0
+        avg_exp = expanded / n if n > 0 else 0.0
+        avg_len = length / solved if solved > 0 else float("nan")
+
+        print(f"{i+1:<10} [{lo}, {hi}]{'':<8} {n:<8} {solved:<10} {rate:<10.1f} "
+              f"{avg_exp:<12.1f} {avg_len:<10.1f}")
+
+    print("-" * len(header))
+    n_total = len(states)
+    overall_rate = total_solved / n_total * 100 if n_total > 0 else 0.0
+    overall_exp = total_expanded / n_total if n_total > 0 else 0.0
+    print(f"{'Overall':<10} {'':<16} {n_total:<8} {total_solved:<10} {overall_rate:<10.1f} "
+          f"{overall_exp:<12.1f} {'':<10}")
+    print("=" * 78)
+
+
 def evaluate(model, model_path=None, num_states=None, lambda_weight=None, max_expand=None):
     """Batch evaluation across short/medium/long difficulty tiers.
 
@@ -219,4 +397,15 @@ if __name__ == "__main__":
     load_time = time.perf_counter() - t0
     print(f"Model loaded in {load_time:.2f}s\n")
 
-    evaluate(model, model_path=model_path)
+    # 方案 B — Always: Stratified Bellman MSE
+    stratified_bellman_mse(model)
+
+    # 方案 C — Optional: Greedy expansion
+    if DEEPCUBEA_VAL_GREEDY_FLAG:
+        print()
+        greedy_expansion_eval(model)
+
+    # 方案 D — Optional: Full A* three-tier evaluation
+    if DEEPCUBEA_VAL_ASTAR_FLAG:
+        print()
+        evaluate(model, model_path=model_path)

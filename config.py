@@ -55,3 +55,16 @@ DEEPCUBEA_LAMBDA = 1.0                  # 加权 A* 系数，λ·g(s) + h(s)
 DEEPCUBEA_NUM_TEST_STATES = 100         # 评估测试状态总数（均分到短/中/长三档）
 DEEPCUBEA_MAX_EXPAND_NODES = 10000    # 最大展开节点数，超限判失败
 DEEPCUBEA_INFERENCE_USE_GPU = False  # A* 搜索推理时是否使用 GPU（与训练 DEEPCUBEA_USE_GPU 解耦）
+DEEPCUBEA_ONLINE_BATCH = 20000        # 每轮外层在线生成状态数 B
+DEEPCUBEA_BASE_BATCH = 5000           # 每轮外层从基础数据集采样状态数 B'，设 0 为纯在线
+DEEPCUBEA_OUTER_SEED = 42             # 外层迭代随机种子基准值
+DEEPCUBEA_SEED_OVERLAP = 0.3          # 相邻轮次 base 采样重叠比例
+
+# ==================== DeepCubeA Validation（deepcubea_search.py 使用） ====================
+
+DEEPCUBEA_VAL_SIZE = 3000             # 验证集状态数量
+DEEPCUBEA_VAL_SEED = 12345            # 验证集生成随机种子
+DEEPCUBEA_VAL_NUM_STRATA = 5          # 分层数（K 范围均分为等宽区间）
+DEEPCUBEA_VAL_GREEDY_EXPAND = 500     # 贪心展开最大节点数
+DEEPCUBEA_VAL_ASTAR_FLAG = False      # 是否启用完整 A* 三档评估
+DEEPCUBEA_VAL_GREEDY_FLAG = False     # 是否启用贪心展开评估
