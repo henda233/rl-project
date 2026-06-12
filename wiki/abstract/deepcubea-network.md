@@ -10,7 +10,7 @@ dependencies:
   - "wiki/abstract/docs/deepcubea-research.md"
   - "wiki/abstract/deepcubea-search.md"
 created_at: 2026-06-11 19:00:00
-updated_at: 2026-06-12 14:30:00
+updated_at: 2026-06-12 17:30:00
 ---
 # 摘要：DeepCubeA 神经网络模块
 
@@ -18,8 +18,9 @@ updated_at: 2026-06-12 14:30:00
 
 - **one-hot 编码**：16 位置 × 16 值 = 256 维，位置 i 值 v → bit `i*16+v`，空格(0)作为普通值参与编码
 - **纯函数状态转移**：`transition(grid_flat, action)` 无环境副作用，非法动作返回 None，action 语义与环境一致（0=上,1=下,2=左,3=右）
-- **网络结构**：Input(256) → FC(256) → BN → ReLU → FC(256) → BN → ReLU → 4×ResBlock → FC(1)，输出标量 J(s)（v3: 添加 BN 对齐原论文，仅 FC 隐藏层，残差块不变）
-- **BN train/eval 模式**：`predict_j`/`predict_j_batch` 内部显式调用 `self.eval()` 确保 BN 使用 running statistics；`compute_targets` 同样调用 `network.eval()`
+- **网络结构**：Input(256) → FC(256) → LN → ReLU → FC(256) → LN → ReLU → 4×ResBlock → FC(1)，输出标量 J(s)（v4: BN → LayerNorm 替换，消除 batch_size ≥ 2 约束；仅 FC 隐藏层，残差块不变）
+- **LayerNorm 优势**：对 `(B, D)` 输入沿 D 维度归一化，行为与 batch_size 无关，训练/推理一致无需模式切换。已删除所有 `.eval()` 调用（predict_j/predict_j_batch/compute_targets/load_model/_compute_bellman_errors）
+- **旧模型不兼容**：BN → LN 后参数字典 key 名变更，旧 checkpoint 无法加载，需重新训练
 - **残差块**：FC(256)+ReLU → FC(256) → +input → ReLU
 - **训练方式**：批量更新 + 固定目标 AVI（外层 Bellman 备份固定 J'(s)=min_a(1+J(A(s,a))) → 内层固定目标监督学习 + patience 早停），双层 tqdm 显示进度，saw-tooth loss 曲线用竖线标记外层边界
 - **AVI 发散**：原训练（每 epoch 重算目标）在 epoch 2331 出现 loss 爆炸至 10^21，根因为 Bellman 备份正反馈雪崩；改为批量更新 + 固定目标后解决

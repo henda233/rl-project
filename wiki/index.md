@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-12 15:10
+> 🔄 最后同步：2026-06-12 17:35
 
 ## 模块总览
 
@@ -14,10 +14,10 @@
 | `RND 实现` | [🔗](./abstract/rnd-impl.md) | 内在奖励探索，β 线性衰减，滑动缓冲区训练预测网络 | ✅ |
 | `切换华容道` | [🔗](./abstract/switch-to-huarongdao.md) | PPO/RND Agent 从 MountainCar 切换为华容道的破坏性改造记录 | ✅ |
 | `DeepCubeA 研究` | [🔗](./abstract/docs/deepcubea-research.md) | 启发式搜索优于RL，近似值迭代训练DNN逼近J(s)，加权A*求解 | ✅ |
-| `DeepCubeA 网络模块` | [🔗](./abstract/deepcubea-network.md) | v1: 4k states/T100/LR1e-3 → loss=0.014; v2: 200k states/T500/LR1e-4/hidden=512/batch=1024/批量更新+固定目标 | ✅ |
+| `DeepCubeA 网络模块` | [🔗](./abstract/deepcubea-network.md) | v1-v3: BN; v4: BN→LayerNorm，消除 batch_size≥2 约束 + 删除所有 .eval() | ✅ |
 | `DeepCubeA 加权 A* 搜索` | [🔗](./abstract/deepcubea-search.md) | 加权A*求解、三档评估、批量预测优化；推理设备解耦、bytes状态、可直接运行搜索评估 | ✅ |
 | `DeepCubeA 批量更新 + 固定目标 AVI` | [🔗](./abstract/deepcubea-target-network.md) | 外层 Bellman 备份固定 J'(s)，内层早停监督学习，无额外 target network | ✅ |
-| `DeepCubeA 在线采样 + 轻量验证` | [🔗](./abstract/deepcubea-online-validation.md) | 在线混合采样(B+B'+overlap)、BN仅FC隐藏层、分层Bellman MSE+贪心展开+完整A*三方案验证 | ✅ |
+| `DeepCubeA 在线采样 + 轻量验证` | [🔗](./abstract/deepcubea-online-validation.md) | 在线混合采样(B+B'+overlap)、LN仅FC隐藏层、分层Bellman MSE+贪心展开+完整A*三方案验证 | ✅ |
 | `Gym 参考` | [🔗](./abstract/gymnasium/agent-training.md) / [custom-env](./abstract/gymnasium/custom-env.md) / [recording](./abstract/gymnasium/recording-agent.md) | ε-greedy 训练循环、Env 继承规范、Record wrapper | ✅ |
 | `参考代码` | [🔗](./abstract/examples/actor-critic-example.md) / [rl-utils](./abstract/examples/rl-utils.md) | PolicyNet/ValueNet、ReplayBuffer、on-policy 循环 | ✅ |
 
@@ -35,11 +35,12 @@
 | `DeepCubeA A* 搜索推理优化` | [🔗](./plan/deepcubea-inference-device-config.md) | completed（S1-S7 全部完成） |
 | `DeepCubeA 批量更新 + 固定目标 AVI` | [🔗](./plan/deepcubea-target-network.md) | completed |
 | `DeepCubeA 在线采样 + 轻量验证` | [🔗](./plan/deepcubea-online-sampling-validation.md) | completed |
+| `DeepCubeA BN → LayerNorm 替换` | [🔗](./plan/deepcubea-bn-to-ln.md) | completed |
 
 ## TODO列表
 
-- [ ] 运行 `deepcubea_online_smoke_test.py` 验证在线采样 + 三项指标
-- [ ] 重新训练模型（在线采样 + BN），对比新旧模型分箱 MSE 和 A* 胜率
+- [x] 运行 `deepcubea_online_smoke_test.py` 验证在线采样 + 三项指标
+- [x] 重新训练模型（在线采样 + LN），对比新旧模型分箱 MSE 和 A* 胜率
 
 ## 笔记
 
@@ -62,6 +63,10 @@ v2 参数（T~U(10,500)/200k states/LR=1e-4/5000 epoch/hidden=512）在 epoch 23
 
 ## 全局更新日志（近10条）
 
+- `06-12 17:35`: wiki 记忆库一致性更新 —— readme.md/index.md/online-validation 摘要中 BN→LN 过期引用清理
+- `06-12 17:30`: BN → LayerNorm 替换完成 —— deepcubea_network.py: BN→LN+注释保留变量名; 删除 predict_j/predict_j_batch/compute_targets/load_model/_compute_bellman_errors 共5处 .eval(); 更新 network/online-validation 摘要
+- `06-12 17:00`: BN batch_size=1 崩溃复现确认 —— `reproduce_bn_crash.py` 单样本 forward 触发 ValueError，根因与远程训练一致；更新 network/online-validation 摘要 + BN→LN 计划执行记录
+- `06-12 16:30`: BN→LayerNorm 替换计划制定 —— 训练 batch_size=1 崩溃根因分析；计划 7 步骤涵盖 network/train/search + wiki 摘要更新
 - `06-12 15:00`: config.py 参数整理 —— 在线采样 4 参数迁入 Training 分组；Validation 分组合并入 Search 分组；命名/结构保持
 - `06-12 14:30`: DeepCubeA 在线采样 + 轻量验证完成 —— S1-S9 全部执行；config 新增 10 个参数；deepcubea_utils.py 共享状态生成；network 添加 BN(仅 FC 隐藏层)+self.eval()；train 在线混合采样(B+B'+overlap)；search 三分层验证(Bellman MSE+贪心展开+完整A*)；generate_data 重构调用 utils；冒烟测试脚本交付
 - `06-12 12:00`: DeepCubeA 在线采样 + 轻量验证计划制定

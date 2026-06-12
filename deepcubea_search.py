@@ -28,7 +28,6 @@ def load_model(model_path=None, use_gpu=None):
     device = torch.device("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
     model = DeepCubeANetwork().to(device)
     model.load_state_dict(torch.load(path, map_location=device, weights_only=True))
-    model.eval()
     return model
 
 
@@ -135,7 +134,6 @@ def _compute_bellman_errors(states, model):
     blank_r = blank_pos // N
     blank_c = blank_pos % N
 
-    model.eval()
     device = next(model.parameters()).device
 
     with torch.inference_mode():

@@ -14,20 +14,20 @@ dependencies:
   - "wiki/abstract/deepcubea-target-network.md"
   - "wiki/plan/deepcubea-online-sampling-validation.md"
 created_at: 2026-06-12 14:30:00
-updated_at: 2026-06-12 14:30:00
+updated_at: 2026-06-12 17:30:00
 ---
 # 摘要：DeepCubeA 在线采样 + 轻量验证
 
 ## 核心结论与关键信息
 
 - **在线混合采样**：每轮外层迭代在线生成 B 个状态（从目标随机游走）+ 从基础数据集采样 B' 个（SEED_OVERLAP 控制跨轮保留比例），合并去重后训练，解除离线固定 20 万状态集的分布固化
-- **Batch Normalization**：仅 FC 隐藏层添加 BN（Linear→BN→ReLU），残差块不变；`predict_j`/`predict_j_batch` 内部显式 `self.eval()` 确保推理安全
+- **LayerNorm**：仅 FC 隐藏层添加 LN（Linear→LN→ReLU），残差块不变；LN 训练/推理一致，已删除所有 `.eval()` 调用
 - **分层 Bellman MSE（方案 B）**：验证集按 K（打乱步数）等宽分层（层数 `DEEPCUBEA_VAL_NUM_STRATA`），每层计算 Bellman MSE 统计（mean/median/std），默认运行
 - **贪心展开（方案 C）**：truncated A*（max_expand 截断，默认 500），`DEEPCUBEA_VAL_GREEDY_FLAG` 控制，统计分箱求解率和平均展开节点数
 - **完整 A* 三档（方案 D）**：保留现有 Short/Medium/Hard 评估，`DEEPCUBEA_VAL_ASTAR_FLAG` 控制
 - **验证手动触发**：训练不自动触发验证，用户手动运行 `python deepcubea_search.py <model_path>`，配置 flags 控制方案 C/D
 - **共享工具模块**：`deepcubea_utils.py` 提供 `generate_scrambled_states` 和 `generate_stratified_states`（支持 `start_state` 参数），被 train/search/generate_data 复用
-- **旧模型不兼容**：添加 BN 后网络结构变更，旧 checkpoint 无法加载新网络
+- **旧模型不兼容**：BN → LN 后网络结构变更，旧 checkpoint 无法加载新网络
 
 ## Config 新增参数
 
@@ -50,6 +50,6 @@ updated_at: 2026-06-12 14:30:00
 
 ## 依赖与影响链
 
-- **上游依赖**：`config.py`（DEEPCUBEA_* 参数）、`deepcubea_network.py`（BN 网络）、`deepcubea_utils.py`（状态生成）
+- **上游依赖**：`config.py`（DEEPCUBEA_* 参数）、`deepcubea_network.py`（LN 网络）、`deepcubea_utils.py`（状态生成）
 - **下游被依赖**：无（训练/验证/生成模块均在本摘要覆盖范围内）
 - **变更扩散评估**：高（config + network + train + search + generate_data + 新建 utils，6 个文件修改 + 1 个新建）

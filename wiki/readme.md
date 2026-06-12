@@ -66,6 +66,7 @@ wiki/
 - ✅ DeepCubeA 数据生成/训练分离
 - ✅ DeepCubeA A* 搜索推理优化（批量转移 + bytes 状态 + GPU 可配）
 - ✅ DeepCubeA 批量更新 + 固定目标 AVI（外层 Bellman 备份 + 内层早停监督学习）
-- ✅ DeepCubeA 在线采样 + 轻量验证（在线混合采样 + BN + 分层 Bellman MSE + 贪心展开 + 完整 A*）
+- ✅ DeepCubeA 在线采样 + 轻量验证（在线混合采样 + LN + 分层 Bellman MSE + 贪心展开 + 完整 A*）
+- ✅ DeepCubeA BN → LayerNorm 替换（消除 batch_size≥2 约束 + 删除所有 .eval() 调用）
 - ✅ config.py 参数整理（在线采样迁入 Training；Validation 合并入 Search）
 - ✅ 代码/测试清理（合并搜索测试到主模块，删除冗余旧测试）

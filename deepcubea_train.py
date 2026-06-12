@@ -62,8 +62,6 @@ def compute_targets(states, network, device):
     blank_r = blank_pos // N
     blank_c = blank_pos % N
 
-    network.eval()
-
     with torch.inference_mode():
         best_j = np.full(B, np.inf, dtype=np.float32)
 
