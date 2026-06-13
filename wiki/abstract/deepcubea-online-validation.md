@@ -13,8 +13,9 @@ dependencies:
   - "wiki/abstract/deepcubea-search.md"
   - "wiki/abstract/deepcubea-target-network.md"
   - "wiki/plan/deepcubea-online-sampling-validation.md"
+  - "wiki/plan/deepcubea-target-threshold.md"
 created_at: 2026-06-12 14:30:00
-updated_at: 2026-06-12 17:30:00
+updated_at: 2026-06-13 12:00:00
 ---
 # 摘要：DeepCubeA 在线采样 + 轻量验证
 
@@ -28,8 +29,9 @@ updated_at: 2026-06-12 17:30:00
 - **验证手动触发**：训练不自动触发验证，用户手动运行 `python deepcubea_search.py <model_path>`，配置 flags 控制方案 C/D
 - **共享工具模块**：`deepcubea_utils.py` 提供 `generate_scrambled_states` 和 `generate_stratified_states`（支持 `start_state` 参数），被 train/search/generate_data 复用
 - **旧模型不兼容**：BN → LN 后网络结构变更，旧 checkpoint 无法加载新网络
+- **论文阈值 θ_c 更新**：引入独立 target_network 计算 Bellman 目标，仅当 check_loss < ε（默认 0.05）时 θ_c ← θ。硬阻断 Bellman 正反馈雪崩（每轮外层检查，内层迭代等价于论文 C 间隔）。支持 VAL_SPLIT 双模式：>0 验证集模式（适配外层少内层多），=0 训练 loss 模式（适配论文外层多内层少）
 
-## Config 新增参数
+## Config 新增参数（在线采样 + 轻量验证 + θ_c 阈值更新）
 
 | 参数 | 默认值 | 说明 |
 |---|---|---|
@@ -37,6 +39,8 @@ updated_at: 2026-06-12 17:30:00
 | `DEEPCUBEA_BASE_BATCH` | 5000 | 每轮基础数据集 B'，0=纯在线 |
 | `DEEPCUBEA_OUTER_SEED` | 42 | 外层种子基准 |
 | `DEEPCUBEA_SEED_OVERLAP` | 0.3 | base 采样跨轮重叠比例 |
+| `DEEPCUBEA_TARGET_EPSILON` | 0.05 | Bellman 误差阈值 ε，低于此值更新 θ_c |
+| `DEEPCUBEA_VAL_SPLIT` | 0.2 | 验证集比例，0 = 禁用验证集（用训练 loss 判断） |
 | `DEEPCUBEA_VAL_SIZE` | 3000 | 验证集状态数 |
 | `DEEPCUBEA_VAL_SEED` | 12345 | 验证集种子 |
 | `DEEPCUBEA_VAL_NUM_STRATA` | 5 | 分层数 |
@@ -46,7 +50,7 @@ updated_at: 2026-06-12 17:30:00
 
 ## 内容概述
 
-> 在线混合采样训练：每轮外层在线生成 B 状态 + 基础数据集采样 B'（SEED_OVERLAP 控制跨轮保留），合并去重后编码→Bellman 备份→内层早停训练。验证指标三方案：方案 B（分层 Bellman MSE，默认运行）、方案 C（贪心展开，flag 控制）、方案 D（完整 A* 三档，flag 控制）。deepcubea_utils.py 共享状态生成；deepcubea_generate_data.py 重构调用 utils；deepcubea_online_smoke_test.py 提供冒烟测试。
+> 在线混合采样训练：每轮外层在线生成 B 状态 + 基础数据集采样 B'（SEED_OVERLAP 控制跨轮保留），合并去重后编码→Bellman 备份（用 θ_c 计算）→ 可选 val 拆分 → 内层早停训练（仅 train 部分）→ 阈值检查（val_loss 或 train_loss < ε → θ_c ← θ）。验证指标三方案：方案 B（分层 Bellman MSE，默认运行）、方案 C（贪心展开，flag 控制）、方案 D（完整 A* 三档，flag 控制）。deepcubea_utils.py 共享状态生成；deepcubea_generate_data.py 重构调用 utils；deepcubea_online_smoke_test.py 提供冒烟测试。
 
 ## 依赖与影响链
 

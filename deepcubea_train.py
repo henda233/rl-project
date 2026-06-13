@@ -28,6 +28,8 @@ from config import (
     DEEPCUBEA_BASE_BATCH,
     DEEPCUBEA_OUTER_SEED,
     DEEPCUBEA_SEED_OVERLAP,
+    DEEPCUBEA_TARGET_EPSILON,
+    DEEPCUBEA_VAL_SPLIT,
 )
 from deepcubea_network import (
     encode_batch,
@@ -124,16 +126,22 @@ def train():
 
     # ── Network & optimizer ──
     network = DeepCubeANetwork().to(device)
+    target_network = DeepCubeANetwork().to(device)
+    target_network.load_state_dict(
+        {k: v.clone() for k, v in network.state_dict().items()}
+    )
     optimizer = torch.optim.Adam(network.parameters(), lr=DEEPCUBEA_LR)
 
     param_count = sum(p.numel() for p in network.parameters())
     print(f"Parameters: {param_count:,}")
     print(f"Training: {DEEPCUBEA_OUTER_ITER} outer × max {DEEPCUBEA_INNER_EPOCHS} inner epochs (patience={DEEPCUBEA_INNER_PATIENCE})")
     print(f"Online: B={DEEPCUBEA_ONLINE_BATCH}  Base: B'={DEEPCUBEA_BASE_BATCH}  Overlap={DEEPCUBEA_SEED_OVERLAP}")
+    print(f"Target θ_c: epsilon={DEEPCUBEA_TARGET_EPSILON}  val_split={DEEPCUBEA_VAL_SPLIT}")
 
     # ── Training: outer Bellman backup × inner fixed-target SGD ──
     all_losses = []
     outer_boundaries = []
+    theta_update_points = []
     prev_base_indices = None
 
     outer_pbar = tqdm(range(1, DEEPCUBEA_OUTER_ITER + 1), desc="Outer", unit=" round")
@@ -169,16 +177,28 @@ def train():
         train_onehot = encode_batch(train_states).to(device)
 
         # 4. Bellman backup: compute fixed targets J'(s)
-        targets = compute_targets(train_states, network, device).to(device)
+        targets = compute_targets(train_states, target_network, device).to(device)
 
         # Record outer boundary for saw-tooth plot (except first)
         if outer_iter > 1:
             outer_boundaries.append(len(all_losses))
 
-        # 5. Inner fixed-target training with early stopping
+        # 5. Validation split (if enabled)
+        if DEEPCUBEA_VAL_SPLIT > 0:
+            n_val = max(1, int(len(train_states) * DEEPCUBEA_VAL_SPLIT))
+            perm = torch.randperm(len(train_states), device=device)
+            val_idx = perm[:n_val]
+            train_idx = perm[n_val:]
+            val_onehot = train_onehot[val_idx]
+            val_targets = targets[val_idx]
+            train_onehot = train_onehot[train_idx]
+            targets = targets[train_idx]
+
+        # 6. Inner fixed-target training with early stopping
         best_inner_loss = float("inf")
         patience_left = DEEPCUBEA_INNER_PATIENCE
 
+        n_train = train_onehot.shape[0]
         inner_pbar = tqdm(
             range(1, DEEPCUBEA_INNER_EPOCHS + 1),
             desc="  Inner",
@@ -186,12 +206,12 @@ def train():
         )
         for inner_epoch in inner_pbar:
             network.train()
-            perm = torch.randperm(len(train_states), device=device)
+            perm = torch.randperm(n_train, device=device)
 
             total_loss = 0.0
             num_batches = 0
 
-            for i in range(0, len(train_states), DEEPCUBEA_BATCH_SIZE):
+            for i in range(0, n_train, DEEPCUBEA_BATCH_SIZE):
                 idx = perm[i : i + DEEPCUBEA_BATCH_SIZE]
                 batch_x = train_onehot[idx]
                 batch_y = targets[idx]
@@ -229,11 +249,30 @@ def train():
             models_dir / f"deepcubea_heuristic_epoch_{outer_iter}.pt",
         )
 
-        outer_pbar.set_postfix(
-            inner_final=f"{avg_loss:.6f}",
-            inner_epochs=f"{inner_epoch}/{DEEPCUBEA_INNER_EPOCHS}",
-            train_size=f"{len(train_states)}",
-        )
+        # 7. Threshold check — update θ_c if loss < ε
+        if DEEPCUBEA_VAL_SPLIT > 0:
+            with torch.inference_mode():
+                val_pred = network(val_onehot)
+                check_loss = F.mse_loss(val_pred, val_targets).item()
+        else:
+            check_loss = best_inner_loss
+
+        theta_updated = check_loss < DEEPCUBEA_TARGET_EPSILON
+        if theta_updated:
+            target_network.load_state_dict(
+                {k: v.clone() for k, v in network.state_dict().items()}
+            )
+            theta_update_points.append(len(all_losses))
+
+        outer_postfix = {
+            "inner_final": f"{avg_loss:.6f}",
+            "inner_epochs": f"{inner_epoch}/{DEEPCUBEA_INNER_EPOCHS}",
+            "train_size": n_train,
+            "θ_c": "updated" if theta_updated else f"frozen({check_loss:.4f})",
+        }
+        if DEEPCUBEA_VAL_SPLIT > 0:
+            outer_postfix["val_loss"] = f"{check_loss:.6f}"
+        outer_pbar.set_postfix(**outer_postfix)
 
     # ── Final save ──
     torch.save(network.state_dict(), models_dir / "deepcubea_heuristic_final.pt")
@@ -242,7 +281,11 @@ def train():
     plt.figure(figsize=(10, 5))
     plt.plot(all_losses)
     for boundary in outer_boundaries:
-        plt.axvline(x=boundary, color="red", linestyle="--", alpha=0.5)
+        plt.axvline(x=boundary, color="red", linestyle="--", alpha=0.5, label="outer boundary" if boundary == outer_boundaries[0] else "")
+    for pt in theta_update_points:
+        plt.axvline(x=pt, color="green", linestyle=":", alpha=0.7, label="θ_c updated" if pt == theta_update_points[0] else "")
+    if outer_boundaries or theta_update_points:
+        plt.legend()
     plt.xlabel("Epoch")
     plt.ylabel("MSE Loss")
     plt.title("DeepCubeA Training Loss (Saw-tooth)")

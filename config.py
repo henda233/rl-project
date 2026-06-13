@@ -51,6 +51,8 @@ DEEPCUBEA_ONLINE_BATCH = 20000        # 每轮外层在线生成状态数 B
 DEEPCUBEA_BASE_BATCH = 5000           # 每轮外层从基础数据集采样状态数 B'，设 0 为纯在线
 DEEPCUBEA_OUTER_SEED = 42             # 外层迭代随机种子基准值
 DEEPCUBEA_SEED_OVERLAP = 0.3          # 相邻轮次 base 采样重叠比例
+DEEPCUBEA_TARGET_EPSILON = 0.05       # Bellman 误差阈值，低于此值更新 θ_c（论文 ε）
+DEEPCUBEA_VAL_SPLIT = 0.2             # 验证集比例，0 = 禁用验证集（用训练 loss 判断）
 
 # ==================== DeepCubeA Search / Validation（deepcubea_search.py 使用） ====================
 

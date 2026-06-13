@@ -4,7 +4,7 @@ related_request: ""
 references:
   - "wiki/abstract/docs/deepcubea-loss-analysis.md"
   - "docs/DeepCubeA文献重要内容.md"
-status: waitting
+status: completed
 created_at: 2026-06-12 20:00:00
 ---
 # 执行计划：DeepCubeA 论文阈值 θ_c 更新 + 验证集适配
@@ -51,11 +51,11 @@ DeepCubeA 论文 DAVI 算法（算法 1，见 `docs/DeepCubeA文献重要内容.
 
 | 步骤ID | 任务描述 | 前置依赖 | 交付物/修改路径 | 状态 |
 |---|---|---|---|---|
-| S1 | config.py 新增 `DEEPCUBEA_TARGET_EPSILON` + `DEEPCUBEA_VAL_SPLIT` | 无 | `config.py` | 待完成 |
-| S2 | deepcubea_train.py 引入 target_network，Bellman 备份改用 θ_c | S1 | `deepcubea_train.py` | 待完成 |
-| S3 | deepcubea_train.py 实现验证集拆分 + 阈值检查 + θ_c 更新逻辑 | S1, S2 | `deepcubea_train.py` | 待完成 |
-| S4 | 外层日志增强：tqdm postfix 显示 θ_c 更新状态 + val_loss | S3 | `deepcubea_train.py` | 待完成 |
-| S5 | 更新 wiki 摘要 + index | S4 | `wiki/abstract/deepcubea-online-validation.md`, `wiki/index.md` | 待完成 |
+| S1 | config.py 新增 `DEEPCUBEA_TARGET_EPSILON` + `DEEPCUBEA_VAL_SPLIT` | 无 | `config.py` | 已完成 |
+| S2 | deepcubea_train.py 引入 target_network，Bellman 备份改用 θ_c | S1 | `deepcubea_train.py` | 已完成 |
+| S3 | deepcubea_train.py 实现验证集拆分 + 阈值检查 + θ_c 更新逻辑 | S1, S2 | `deepcubea_train.py` | 已完成 |
+| S4 | 外层日志增强：tqdm postfix 显示 θ_c 更新状态 + val_loss + loss 曲线 θ_c 标记 | S3 | `deepcubea_train.py` | 已完成 |
+| S5 | 更新 wiki 摘要 + index | S4 | `wiki/abstract/deepcubea-online-validation.md`, `wiki/index.md` | 已完成 |
 
 ### S2 详情 — θ_c 引入与 Bellman 备份切换
 
@@ -125,3 +125,4 @@ outer_pbar postfix 新增字段：
 ## 📝 执行记录
 
 - `2026-06-12 20:00`: 计划已生成
+- `2026-06-13 12:00`: S1-S5 全部执行完成 —— config 新增 TARGET_EPSILON(0.05)+VAL_SPLIT(0.2)；train 引入 target_network(θ_c) + Bellman 备份改用 θ_c + val 拆分 + 阈值检查 + θ_c 更新 + tqdm 增强 + loss 曲线 θ_c 标记；wiki 摘要+index 更新
