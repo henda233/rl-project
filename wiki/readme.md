@@ -9,7 +9,7 @@
 
 **技术栈**：Python 3.12, numpy, pytorch, tqdm, matplotlib, gymnasium
 
-**核心代码**：`env_digital_huarongdao.py`（环境）、`ppo_agent.py`（PPO）、`ppo_rnd_agent.py`（PPO+RND）、`config.py`（配置）、`deepcubea_network.py`（网络/编码/转移）、`deepcubea_train.py`（批量更新+固定目标AVI+θ_c阈值更新）、`deepcubea_search.py`（加权A*搜索+评估）、`deepcubea_generate_data.py`（训练数据生成）、`deepcubea_utils.py`（共享状态生成）
+**核心代码**：`env_digital_huarongdao.py`（环境）、`ppo_agent.py`（PPO）、`ppo_rnd_agent.py`（PPO+RND）、`config.py`（配置）、`deepcubea_network.py`（网络/编码/转移）、`deepcubea_train.py`（批量更新+固定目标AVI+θ_c阈值更新）、`deepcubea_search.py`（加权A*搜索+贪心展开+评估）、`deepcubea_generate_data.py`（训练数据生成）、`deepcubea_utils.py`（共享状态生成）、`deepcubea_official_network.py`（官方ResnetModel移植+OfficialModelWrapper）、`deepcubea_official_data.py`（官方测试数据加载）、`deepcubea_official_search.py`（官方模型三项评估）
 
 ## WIKI 结构
 
@@ -57,7 +57,8 @@ wiki/
 9. **了解 DeepCubeA 在线采样** → `abstract/deepcubea-online-validation.md`
 10. **了解 DeepCubeA 训练 Loss 分析** → `abstract/docs/deepcubea-loss-analysis.md`
 11. **了解 PPO + J(s) 势函数塑形分析** → `abstract/docs/ppo-deepcubea-shaping-analysis.md`
-12. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
+12. **了解官方预训练模型评估** → `abstract/deepcubea-official-model-evaluation.md`
+13. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
 
 ## 当前状态
 
@@ -77,3 +78,4 @@ wiki/
 - ✅ 代码/测试清理（合并搜索测试到主模块，删除冗余旧测试）
 - ✅ PPO + DeepCubeA J(s) 势函数塑形可行性分析
 - ✅ DeepCubeA Checkpoint 与 Loss 图保存优化（latest.pt 覆盖式 + CSV + 累积曲线图每轮外层同步更新）
+- ✅ DeepCubeA 官方预训练模型评估框架（ResnetModel 移植 + 三项评估：Bellman MSE / 贪心展开 / A*）

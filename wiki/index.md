@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-13 22:30
+> 🔄 最后同步：2026-06-14 15:30
 
 ## 模块总览
 
@@ -20,6 +20,8 @@
 | `DeepCubeA 批量更新 + 固定目标 AVI` | [🔗](./abstract/deepcubea-target-network.md) | 外层 Bellman 备份固定 J'(s)，内层早停监督学习，无额外 target network | ✅ |
 | `DeepCubeA 在线采样 + 轻量验证` | [🔗](./abstract/deepcubea-online-validation.md) | 在线混合采样、LN、分层Bellman MSE+贪心展开+A*、θ_c阈值更新硬阻断Bellman正反馈雪崩 | ✅ |
 | `PPO + J(s) 势函数塑形分析` | [🔗](./abstract/docs/ppo-deepcubea-shaping-analysis.md) | 方案A(势函数塑形) vs 方案B(状态惩罚)、联合训练三重风险、阶段性联合训练路径、vs A*搜索优劣对比 | ✅ |
+| `DeepCubeA 官方仓库探索` | [🔗](./abstract/deepcubea-official-repo.md) | ResnetModel vs DeepCubeANetwork 架构对比、NPuzzleState、AVI 训练流程、puzzle15 预训练模型 | ✅ |
+| `DeepCubeA 官方模型评估计划` | [🔗](./abstract/deepcubea-official-model-evaluation.md) | 方案C pickle→numpy、直接移植 ResnetModel、OfficialModelWrapper 对齐 DeepCubeANetwork 接口、解长度排序三等分、8 个 DEEPCUBEA_OFFICIAL_* config 键、参考 search.py 核心函数 | ✅ |
 | `Gym 参考` | [🔗](./abstract/gymnasium/agent-training.md) / [custom-env](./abstract/gymnasium/custom-env.md) / [recording](./abstract/gymnasium/recording-agent.md) | ε-greedy 训练循环、Env 继承规范、Record wrapper | ✅ |
 | `参考代码` | [🔗](./abstract/examples/actor-critic-example.md) / [rl-utils](./abstract/examples/rl-utils.md) | PolicyNet/ValueNet、ReplayBuffer、on-policy 循环 | ✅ |
 
@@ -40,6 +42,7 @@
 | `DeepCubeA BN → LayerNorm 替换` | [🔗](./plan/deepcubea-bn-to-ln.md) | completed |
 | `DeepCubeA 论文阈值 θ_c 更新` | [🔗](./plan/deepcubea-target-threshold.md) | completed |
 | `DeepCubeA Checkpoint 与 Loss 图保存优化` | [🔗](./plan/deepcubea-checkpoint-optimization.md) | completed |
+| `DeepCubeA 官方预训练模型评估` | [🔗](./plan/deepcubea-official-model-evaluation.md) | completed |
 
 ## TODO列表
 
@@ -60,7 +63,15 @@ AVI 训练的核心问题：网络输出层无界（Linear→scalar），系统�
 - `target_network θ_c`：独立实例，Bellman 备份改用 θ_c，仅当 val_loss < ε 时 clone θ
 - loss 曲线标记：红色虚竖线=外层边界，绿色虚竖线=θ_c 更新点
 
+### data_0.pkl 内部结构与方案 C（2026-06-14）
+
+官方测试数据 pickle 结构：`dict{'states': List[NPuzzleState](500), 'solutions': List[List[int]](500), 'num_nodes_generated': List[int](500), 'times': List[float](500)}`。每个 NPuzzleState 的 `.tiles` 为 `(16,) int32` ndarray。
+
+方案 C 一次性将 pickle 转为 `tiles.npy (500,16)` + `solution_lengths.npy (500,)`，彻底解除 pickle 的 `environments.n_puzzle` 模块路径依赖。转换后不再需要拷贝 NPuzzleState/State 类。
+
 ### 核心设计决策
+
+- **ptr_per_state 索引 bug（2026-06-14）**：`_compute_bellman_errors_official` 中 children 收集与父 state 错位。根因：每 state 成对存储 start/end（2B 条），但取值 `ptr_per_state[i], ptr_per_state[i+1]` 步长=1，奇数索引 state 拿到 0 children → error=J(s)²≈3243。修复：offsets 单条记录（B+1 条），步长=1 自然正确。教训：成对存储必须成对取值（步长=2），单条 offset 模式更安全。
 
 - **非法动作惩罚替代 Action Masking**：采样不屏蔽非法动作，环境区分合法(-1)/非法(-2)奖励。Action Masking 导致采样/更新分布不一致，ratio 溢出 NaN。
 - **模型保存标准**：按原始 return（不含好奇心奖励）选择最优模型。
@@ -69,6 +80,11 @@ AVI 训练的核心问题：网络输出层无界（Linear→scalar），系统�
 
 ## 全局更新日志（近10条）
 
+- `06-14 15:30`: 修复 `_compute_bellman_errors_official` ptr_per_state 索引 bug —— children 与父 state 错位，Bellman MSE 从 1411 降至 0.36；wiki 摘要/计划/index 同步更新
+- `06-14 01:20`: DeepCubeA 官方预训练模型评估完成 —— S0-S5 全部执行：data/ 预处理 + ResnetModel 移植 + 贪心展开改造 + 三项评估脚本 + wiki 更新；冒烟验证 J(s) ∈ [36,58] mean=52.85 对齐解路径长度
+- `06-14 15:00`: DeepCubeA 官方预训练模型评估计划 v4 澄清 —— OfficialModelWrapper 接口对齐 DeepCubeANetwork（仅 predict_j/predict_j_batch）；Bellman MSE 参考 search.py:129-168；分档参考 evaluate:300-379；weighted_astar_official 跳过 encode_batch；Config 键全量 DEEPCUBEA_OFFICIAL_* 前缀；S0 在项目 venv 执行；计划/摘要/index 同步更新
+- `06-14`: DeepCubeA 官方预训练模型评估计划 v3 更新 —— 方案 C pickle→numpy，新增 S0 数据预处理，去除 NPuzzleState 拷贝，细化 data_0.pkl 结构，新增 config 键，去除 output.txt 对比，计划/摘要/index 同步更新
+- `06-13 23:50`: DeepCubeA 官方仓库探索 + 官方预训练模型评估计划 —— 笔记、摘要、计划已写入 wiki
 - `06-13 22:30`: DeepCubeA Checkpoint 与 Loss 图保存优化完成 —— latest.pt 覆盖式保存 + CSV + 累积 loss 曲线图每轮外层迭代同步更新
 - `06-13 22:00`: wiki 记忆库压缩 —— index.md 笔记精简合并（Bellman 雪崩3→1），更新日志 18→10；readme.md 补充缺失摘要引用
 - `06-13 21:30`: DeepCubeA Checkpoint 与 Loss 图保存优化计划制定

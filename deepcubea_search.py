@@ -6,7 +6,7 @@ from config import (
     DEEPCUBEA_LAMBDA, DEEPCUBEA_MODEL_PATH, DEEPCUBEA_MAX_EXPAND_NODES,
     DEEPCUBEA_NUM_TEST_STATES, DEEPCUBEA_INFERENCE_USE_GPU,
     DEEPCUBEA_VAL_SIZE, DEEPCUBEA_VAL_SEED, DEEPCUBEA_VAL_NUM_STRATA,
-    DEEPCUBEA_VAL_GREEDY_EXPAND, DEEPCUBEA_VAL_ASTAR_FLAG, DEEPCUBEA_VAL_GREEDY_FLAG,
+    DEEPCUBEA_VAL_GREEDY_MAX_STEPS, DEEPCUBEA_VAL_ASTAR_FLAG, DEEPCUBEA_VAL_GREEDY_FLAG,
 )
 from deepcubea_network import DeepCubeANetwork, transition, get_children, encode_batch
 from deepcubea_utils import generate_stratified_states
@@ -218,14 +218,37 @@ def stratified_bellman_mse(model, val_size=None, t_min=None, t_max=None,
     print("=" * 72)
 
 
-def greedy_expansion_eval(model, val_size=None, t_min=None, t_max=None,
-                          num_strata=None, val_seed=None, max_expand=None,
-                          lambda_weight=None):
-    """方案 C: Greedy expansion evaluation (flag-controlled).
+def _greedy_expand(start_grid_flat, model, max_steps):
+    """Pure greedy: at each step, pick child with argmin J(s').
 
-    Runs truncated weighted A* (max_expand limit) on stratified
-    validation states, reporting per-stratum solve rate and
-    average expanded nodes.
+    Returns (solution_path, num_steps) or (None, num_steps) if failed.
+    """
+    current = start_grid_flat.copy()
+    blank_idx = int(np.argmin(current))
+    path = []
+    for step in range(max_steps):
+        if current.tobytes() == _GOAL_BYTES:
+            return path, step
+        children_info = get_children(current, blank_idx)
+        if not children_info:
+            return None, step
+        grids = np.array([c[0] for c in children_info], dtype=np.int32)
+        actions = [c[1] for c in children_info]
+        new_blank_idxs = [c[2] for c in children_info]
+        j_vals = model.predict_j_batch(grids).cpu().numpy()
+        best_idx = int(np.argmin(j_vals))
+        current = grids[best_idx]
+        path.append(actions[best_idx])
+        blank_idx = new_blank_idxs[best_idx]
+    return None, max_steps
+
+
+def greedy_expansion_eval(model, val_size=None, t_min=None, t_max=None,
+                          num_strata=None, val_seed=None, max_steps=None):
+    """方案 C: Pure greedy expansion evaluation (flag-controlled).
+
+    At each step, picks child with argmin J(s') — no priority queue, no backtracking.
+    Reports per-stratum solve rate and average solution length.
     """
     if val_size is None:
         val_size = DEEPCUBEA_VAL_SIZE
@@ -237,10 +260,8 @@ def greedy_expansion_eval(model, val_size=None, t_min=None, t_max=None,
         num_strata = DEEPCUBEA_VAL_NUM_STRATA
     if val_seed is None:
         val_seed = DEEPCUBEA_VAL_SEED
-    if max_expand is None:
-        max_expand = DEEPCUBEA_VAL_GREEDY_EXPAND
-    if lambda_weight is None:
-        lambda_weight = DEEPCUBEA_LAMBDA
+    if max_steps is None:
+        max_steps = DEEPCUBEA_VAL_GREEDY_MAX_STEPS
 
     states, k_values, strata_bounds = generate_stratified_states(
         val_size, t_min, t_max, num_strata, seed=val_seed,
@@ -248,16 +269,16 @@ def greedy_expansion_eval(model, val_size=None, t_min=None, t_max=None,
     )
 
     print("=" * 78)
-    print("方案 C — Greedy Expansion Evaluation (truncated A*)")
+    print("方案 C — Greedy Expansion Evaluation (argmin J(s'))")
     print("=" * 78)
-    print(f"States: {len(states)}  Max Expand: {max_expand}  Lambda: {lambda_weight}")
+    print(f"States: {len(states)}  Max Steps: {max_steps}")
     print()
-    header = f"{'Stratum':<10} {'K Range':<16} {'Count':<8} {'Solved':<10} {'Rate %':<10} {'Avg Expand':<12} {'Avg Len':<10}"
+    header = f"{'Stratum':<10} {'K Range':<16} {'Count':<8} {'Solved':<10} {'Rate %':<10} {'Avg Steps':<12} {'Avg Len':<10}"
     print(header)
     print("-" * len(header))
 
     total_solved = 0
-    total_expanded = 0
+    total_steps = 0
     total_length = 0
 
     for i, (lo, hi) in enumerate(strata_bounds):
@@ -266,34 +287,34 @@ def greedy_expansion_eval(model, val_size=None, t_min=None, t_max=None,
         stratum_ks = k_values[mask]
 
         solved = 0
-        expanded = 0
+        steps_sum = 0
         length = 0
 
         for grid in stratum_states:
-            path, exp = weighted_astar(grid, model, lambda_weight, max_expand)
-            expanded += exp
+            path, num_steps = _greedy_expand(grid, model, max_steps)
+            steps_sum += num_steps
             if path is not None:
                 solved += 1
                 length += len(path)
 
         total_solved += solved
-        total_expanded += expanded
+        total_steps += steps_sum
         total_length += length
 
         n = len(stratum_states)
         rate = solved / n * 100 if n > 0 else 0.0
-        avg_exp = expanded / n if n > 0 else 0.0
+        avg_steps = steps_sum / n if n > 0 else 0.0
         avg_len = length / solved if solved > 0 else float("nan")
 
         print(f"{i+1:<10} [{lo}, {hi}]{'':<8} {n:<8} {solved:<10} {rate:<10.1f} "
-              f"{avg_exp:<12.1f} {avg_len:<10.1f}")
+              f"{avg_steps:<12.1f} {avg_len:<10.1f}")
 
     print("-" * len(header))
     n_total = len(states)
     overall_rate = total_solved / n_total * 100 if n_total > 0 else 0.0
-    overall_exp = total_expanded / n_total if n_total > 0 else 0.0
+    overall_steps = total_steps / n_total if n_total > 0 else 0.0
     print(f"{'Overall':<10} {'':<16} {n_total:<8} {total_solved:<10} {overall_rate:<10.1f} "
-          f"{overall_exp:<12.1f} {'':<10}")
+          f"{overall_steps:<12.1f} {'':<10}")
     print("=" * 78)
 
 

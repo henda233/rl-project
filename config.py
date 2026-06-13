@@ -64,6 +64,19 @@ DEEPCUBEA_INFERENCE_USE_GPU = True  # A* 搜索推理时是否使用 GPU（与�
 DEEPCUBEA_VAL_SIZE = 100             # 验证集状态数量
 DEEPCUBEA_VAL_SEED = 12345            # 验证集生成随机种子
 DEEPCUBEA_VAL_NUM_STRATA = 5          # 分层数（K 范围均分为等宽区间）
-DEEPCUBEA_VAL_GREEDY_EXPAND = 500     # 贪心展开最大节点数
+DEEPCUBEA_VAL_GREEDY_MAX_STEPS = 500   # 纯贪心展开最大步数（argmin J(s') 步步跟随，无回溯）
 DEEPCUBEA_VAL_ASTAR_FLAG = True      # 是否启用完整 A* 三档评估
 DEEPCUBEA_VAL_GREEDY_FLAG = False     # 是否启用贪心展开评估
+
+# ==================== DeepCubeA Official Model Evaluation ====================
+DEEPCUBEA_OFFICIAL_MODEL_PATH = "data/model_state_dict.pt"
+DEEPCUBEA_OFFICIAL_DATA_DIR = "data/"
+DEEPCUBEA_OFFICIAL_LAMBDA = 1.0
+DEEPCUBEA_OFFICIAL_MAX_EXPAND_NODES = 10000
+DEEPCUBEA_OFFICIAL_NUM_STRATA = 3
+DEEPCUBEA_OFFICIAL_GREEDY_MAX_STEPS = 1000
+DEEPCUBEA_OFFICIAL_GREEDY_FLAG = False
+DEEPCUBEA_OFFICIAL_ASTAR_FLAG = True
+
+# ==================== DeepCubeA Greedy Expansion ====================
+DEEPCUBEA_GREEDY_MAX_STEPS = 1000       # 纯贪心展开最大步数
