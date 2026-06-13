@@ -54,6 +54,7 @@ wiki/
 8. **了解 DeepCubeA 训练** → `abstract/deepcubea-target-network.md`
 9. **了解 DeepCubeA 在线采样** → `abstract/deepcubea-online-validation.md`
 10. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
+11. **查看 PPO + J(s) 势函数塑形分析** → `abstract/docs/ppo-deepcubea-shaping-analysis.md`
 
 ## 当前状态
 

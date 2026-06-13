@@ -19,6 +19,7 @@
 | `DeepCubeA 加权 A* 搜索` | [🔗](./abstract/deepcubea-search.md) | 加权A*求解、三档评估、批量预测优化；推理设备解耦、bytes状态、可直接运行搜索评估 | ✅ |
 | `DeepCubeA 批量更新 + 固定目标 AVI` | [🔗](./abstract/deepcubea-target-network.md) | 外层 Bellman 备份固定 J'(s)，内层早停监督学习，无额外 target network | ✅ |
 | `DeepCubeA 在线采样 + 轻量验证` | [🔗](./abstract/deepcubea-online-validation.md) | 在线混合采样、LN、分层Bellman MSE+贪心展开+A*、θ_c阈值更新硬阻断Bellman正反馈雪崩 | ✅ |
+| `PPO + J(s) 势函数塑形分析` | [🔗](./abstract/docs/ppo-deepcubea-shaping-analysis.md) | 方案A(势函数塑形) vs 方案B(状态惩罚)、联合训练三重风险、阶段性联合训练路径、vs A*搜索优劣对比 | ✅ |
 | `Gym 参考` | [🔗](./abstract/gymnasium/agent-training.md) / [custom-env](./abstract/gymnasium/custom-env.md) / [recording](./abstract/gymnasium/recording-agent.md) | ε-greedy 训练循环、Env 继承规范、Record wrapper | ✅ |
 | `参考代码` | [🔗](./abstract/examples/actor-critic-example.md) / [rl-utils](./abstract/examples/rl-utils.md) | PolicyNet/ValueNet、ReplayBuffer、on-policy 循环 | ✅ |
 
@@ -105,6 +106,7 @@ v2 每 epoch 重算目标时 epoch 2331 的瞬间爆炸（10^21）和当前每�
 
 ## 全局更新日志（近10条）
 
+- `06-13 21:00`: PPO + DeepCubeA J(s) 势函数塑形分析 —— 方案A/B理论对比、联合训练三重风险（冷启动/双重正反馈/非平稳分布）、阶段性联合训练推荐路径、vs A*搜索优劣；新建 request+abstract+index更新
 - `06-13 12:00`: DeepCubeA 论文阈值 θ_c 更新完成 —— config 新增 TARGET_EPSILON(0.05)+VAL_SPLIT(0.2)；train 引入 target_network θ_c，Bellman 备份改用 θ_c，val 拆分+阈值检查+θ_c 更新逻辑；tqdm 显示 θ_c 状态+val_loss；loss 曲线绿色标记 θ_c 更新点；更新 wiki 摘要+index
 - `06-12 20:00`: DeepCubeA 论文阈值 θ_c 更新计划制定 —— 引入独立 target_network 计算 Bellman 目标，仅当 val_loss < ε 时更新 θ_c。新增 loss 曲线分析文档（docs/DeepCubeA训练loss曲线分析.md）及其摘要，作为计划核心依据
 - `06-12 20:00`: 保存其他 AI 对 DeepCubeA 训练 loss 曲线的分析至 wiki —— 诊断内层收敛/外层发散、Bellman 备份正反馈雪崩。创建 docs 内容 + abstract 摘要 + index 索引
