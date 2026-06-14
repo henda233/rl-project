@@ -74,7 +74,7 @@ wiki/
 - ✅ DeepCubeA 在线采样 + 轻量验证（在线混合采样 + LN + 分层 Bellman MSE + 贪心展开 + 完整 A*）
 - ✅ DeepCubeA BN → LayerNorm 替换（消除 batch_size≥2 约束 + 删除所有 .eval() 调用）
 - ✅ DeepCubeA θ_c 阈值更新（独立 target_network + 验证集拆分 + 硬阻断 Bellman 正反馈雪崩）
-- ✅ config.py 参数整理（在线采样迁入 Training；Validation 合并入 Search）
+- ✅ config.py 二次整理（删除孤儿参数 + 拆分独立 Data Generation section，45 参数 6 section）
 - ✅ 代码/测试清理（合并搜索测试到主模块，删除冗余旧测试）
 - ✅ PPO + DeepCubeA J(s) 势函数塑形可行性分析
 - ✅ DeepCubeA Checkpoint 与 Loss 图保存优化（latest.pt 覆盖式 + CSV + 累积曲线图每轮外层同步更新）

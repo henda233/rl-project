@@ -34,11 +34,15 @@ HUARONGDAO_FIRST_PLACEMENT_REWARD = 2  # 首次归位奖励
 HUARONGDAO_LEGAL_STEP_REWARD = -1     # 合法动作每步奖励
 HUARONGDAO_ILLEGAL_STEP_REWARD = -2   # 非法动作每步奖励
 
-# ==================== DeepCubeA Training（deepcubea_train.py 使用） ====================
+# ==================== DeepCubeA Data Generation（deepcubea_generate_data.py 使用） ====================
 
 DEEPCUBEA_T_MIN = 3                   # 随机游走最小步数（跳过琐碎近距状态）
 DEEPCUBEA_T_MAX = 500                   # 随机游走最大步数（覆盖中远距离状态）
 DEEPCUBEA_TRAIN_SET_SIZE = 200000      # 训练集状态数（适配 RTX 3050 4GB）
+DEEPCUBEA_TRAIN_DATA_PATH = "results/train_data/train_states.npy"  # 训练数据保存/加载路径
+
+# ==================== DeepCubeA Training（deepcubea_train.py 使用） ====================
+
 DEEPCUBEA_LR = 1e-4                    # 学习率（压低 Bellman 备份震荡）
 DEEPCUBEA_BATCH_SIZE = 256             # 批大小
 DEEPCUBEA_OUTER_ITER = 200             # Bellman 备份轮数（外层迭代）
@@ -46,7 +50,6 @@ DEEPCUBEA_INNER_EPOCHS = 200          # 每轮最大训练 epoch（内层迭代�
 DEEPCUBEA_INNER_PATIENCE = 15         # 内层早停 patience（loss 连续不改善 epoch 数）
 DEEPCUBEA_HIDDEN_DIM = 512             # 隐藏层维度
 DEEPCUBEA_USE_GPU = True               # 是否使用 GPU
-DEEPCUBEA_TRAIN_DATA_PATH = "results/train_data/train_states.npy"  # 训练数据保存/加载路径
 DEEPCUBEA_ONLINE_BATCH = 25000        # 每轮外层在线生成状态数 B
 DEEPCUBEA_BASE_BATCH = 5000           # 每轮外层从基础数据集采样状态数 B'，设 0 为纯在线
 DEEPCUBEA_OUTER_SEED = 42             # 外层迭代随机种子基准值
@@ -77,6 +80,3 @@ DEEPCUBEA_OFFICIAL_NUM_STRATA = 3
 DEEPCUBEA_OFFICIAL_GREEDY_MAX_STEPS = 1000
 DEEPCUBEA_OFFICIAL_GREEDY_FLAG = False
 DEEPCUBEA_OFFICIAL_ASTAR_FLAG = True
-
-# ==================== DeepCubeA Greedy Expansion ====================
-DEEPCUBEA_GREEDY_MAX_STEPS = 1000       # 纯贪心展开最大步数

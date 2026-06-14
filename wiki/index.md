@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-14 15:30
+> 🔄 最后同步：2026-06-14 16:00
 
 ## 模块总览
 
@@ -80,6 +80,7 @@ AVI 训练的核心问题：网络输出层无界（Linear→scalar），系统�
 
 ## 全局更新日志（近10条）
 
+- `06-14 16:00`: config.py 二次整理 —— 删除孤儿参数 DEEPCUBEA_GREEDY_MAX_STEPS；拆分独立 DeepCubeA Data Generation section（T_MIN/T_MAX/TRAIN_SET_SIZE/TRAIN_DATA_PATH）；config 从 46 参数 7 section 精简为 45 参数 6 section
 - `06-14 15:30`: 修复 `_compute_bellman_errors_official` ptr_per_state 索引 bug —— children 与父 state 错位，Bellman MSE 从 1411 降至 0.36；wiki 摘要/计划/index 同步更新
 - `06-14 01:20`: DeepCubeA 官方预训练模型评估完成 —— S0-S5 全部执行：data/ 预处理 + ResnetModel 移植 + 贪心展开改造 + 三项评估脚本 + wiki 更新；冒烟验证 J(s) ∈ [36,58] mean=52.85 对齐解路径长度
 - `06-14 15:00`: DeepCubeA 官方预训练模型评估计划 v4 澄清 —— OfficialModelWrapper 接口对齐 DeepCubeANetwork（仅 predict_j/predict_j_batch）；Bellman MSE 参考 search.py:129-168；分档参考 evaluate:300-379；weighted_astar_official 跳过 encode_batch；Config 键全量 DEEPCUBEA_OFFICIAL_* 前缀；S0 在项目 venv 执行；计划/摘要/index 同步更新
