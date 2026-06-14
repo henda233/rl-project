@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-14 19:00
+> 🔄 最后同步：2026-06-14 20:30
 
 ## 模块总览
 
@@ -24,6 +24,7 @@
 | `DeepCubeA 官方模型评估计划` | [🔗](./abstract/deepcubea-official-model-evaluation.md) | 方案C pickle→numpy、直接移植 ResnetModel、OfficialModelWrapper 对齐 DeepCubeANetwork 接口、解长度排序三等分、8 个 DEEPCUBEA_OFFICIAL_* config 键、参考 search.py 核心函数 | ✅ |
 | `DeepCubeA 官方模型评估 Bug 复盘` | [🔗](./abstract/docs/deepcubea-official-bug-postmortem.md) | 3 个移植 bug（ptr_per_state 索引 + blank_idx 硬编码 + _GOAL_BYTES dtype）的症状/根因/修复/预防 | ✅ |
 | `DeepCubeA 官方 BWAS 分析` | [🔗](./abstract/deepcubea-bwas-analysis.md) | 官方 BWAS 架构详解、与我们 predict_j_batch 的等价性论证、不建议拷贝的决策 | ✅ |
+| `DeepCubeA 24-Puzzle 适配` | [🔗](./abstract/deepcubea-puzzle24-adaptation.md) | N=4→5，改 2 文件（config + official_network），ResnetModel 维度从 HUARONGDAO_N 推导，仅评估不训练，S3 冒烟标准已定义，计划已确认 | ⏳ |
 | `Gym 参考` | [🔗](./abstract/gymnasium/agent-training.md) / [custom-env](./abstract/gymnasium/custom-env.md) / [recording](./abstract/gymnasium/recording-agent.md) | ε-greedy 训练循环、Env 继承规范、Record wrapper | ✅ |
 | `参考代码` | [🔗](./abstract/examples/actor-critic-example.md) / [rl-utils](./abstract/examples/rl-utils.md) | PolicyNet/ValueNet、ReplayBuffer、on-policy 循环 | ✅ |
 
@@ -46,6 +47,7 @@
 | `DeepCubeA Checkpoint 与 Loss 图保存优化` | [🔗](./plan/deepcubea-checkpoint-optimization.md) | completed |
 | `DeepCubeA 官方预训练模型评估` | [🔗](./plan/deepcubea-official-model-evaluation.md) | completed |
 | `DeepCubeA 官方搜索测试数据来源开关` | [🔗](./plan/deepcubea-official-data-switch.md) | completed |
+| `DeepCubeA 24-Puzzle 适配` | [🔗](./plan/deepcubea-puzzle24-adaptation.md) | waiting（用户已确认，补充 S3 冒烟标准 + 代码审查确认） |
 
 ## TODO列表
 
@@ -85,6 +87,8 @@ AVI 训练的核心问题：网络输出层无界（Linear→scalar），系统�
 
 ## 全局更新日志（近10条）
 
+- `06-14 20:30`: DeepCubeA 24-Puzzle 适配计划用户确认 —— 补充 S3 冒烟通过标准（25≤J(s)≤140）、ResnetModel 调用点确认（仅 L104）、docstring 更新点备注；计划/摘要/索引已同步
+- `06-14 20:00`: DeepCubeA 24-Puzzle 适配计划制定 —— N=4→5，仅改 2 文件（config + official_network），参数不变，仅评估不训练；wiki 需求/摘要/计划/索引已更新
 - `06-14 19:00`: DeepCubeA 官方 BWAS 实现分析完成 —— 官方 AStar 类 + C++ parallel_weighted_astar 详解，核心结论：批量 GPU 推理我们已等价实现，多实例设计官方未实际启用，不建议拷贝；wiki 新增摘要/索引
 - `06-14 18:45`: DeepCubeA 官方模型评估 Bug 复盘完成 —— 3 个移植 bug 全面分析（ptr_per_state 索引 + blank_idx 硬编码 + _GOAL_BYTES dtype），5 条预防策略；wiki 新增摘要/索引
 - `06-14 18:00`: 修复 weighted_astar_official blank_idx 硬编码 0 bug —— A* 第一步生成错误孩子 → 方案 C 胜率 0%；补上 closed set + tiebreaker + goal 短路

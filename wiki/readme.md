@@ -40,7 +40,8 @@ wiki/
 │   ├── deepcubea-search.md
 │   ├── deepcubea-bwas-analysis.md
 │   ├── deepcubea-target-network.md
-│   └── deepcubea-online-validation.md
+│   ├── deepcubea-online-validation.md
+│   └── deepcubea-puzzle24-adaptation.md
 ├── request/           // 用户需求
 └── plan/              // 执行计划
 ```
@@ -62,6 +63,7 @@ wiki/
 13. **了解官方模型评估 Bug 复盘** → `abstract/docs/deepcubea-official-bug-postmortem.md`
 14. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
 15. **了解官方 BWAS 分析** → `abstract/deepcubea-bwas-analysis.md`
+16. **了解 24-Puzzle 适配计划** → `abstract/deepcubea-puzzle24-adaptation.md`
 
 ## 当前状态
 
