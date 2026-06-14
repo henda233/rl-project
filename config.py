@@ -27,7 +27,7 @@ RND_BUFFER_SIZE = 1                    # 状态滑动缓冲区大小（保留最
 
 # ==================== 数字华容道配置（env_digital_huarongdao.py 使用） ====================
 
-HUARONGDAO_N = 4                       # 棋盘大小 n×n
+HUARONGDAO_N = 5                       # 棋盘大小 n×n
 HUARONGDAO_MAX_STEPS = 200             # 最大步数
 HUARONGDAO_SHUFFLE_STEPS = 50          # 正向打乱步数
 HUARONGDAO_FIRST_PLACEMENT_REWARD = 2  # 首次归位奖励
@@ -80,7 +80,7 @@ DEEPCUBEA_OFFICIAL_NUM_STRATA = 3
 DEEPCUBEA_OFFICIAL_GREEDY_MAX_STEPS = 1000
 DEEPCUBEA_OFFICIAL_GREEDY_FLAG = False
 DEEPCUBEA_OFFICIAL_ASTAR_FLAG = True
-DEEPCUBEA_OFFICIAL_USE_OFFICIAL_DATA = False  # 是否使用官方测试数据，False 则随机游走生成
+DEEPCUBEA_OFFICIAL_USE_OFFICIAL_DATA = True   # 是否使用官方测试数据，False 则随机游走生成
 DEEPCUBEA_OFFICIAL_T_MIN = 3               # 随机游走最小步数（USE_OFFICIAL_DATA=False 时生效）
 DEEPCUBEA_OFFICIAL_T_MAX = 500             # 随机游走最大步数（USE_OFFICIAL_DATA=False 时生效）
 DEEPCUBEA_OFFICIAL_NUM_TEST_STATES = 500   # 生成测试状态数（USE_OFFICIAL_DATA=False 时生效）

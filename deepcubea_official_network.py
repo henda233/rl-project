@@ -2,6 +2,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from config import HUARONGDAO_N
+
+N2 = HUARONGDAO_N * HUARONGDAO_N
 
 
 class ResnetModel(nn.Module):
@@ -85,14 +88,14 @@ class OfficialModelWrapper:
         self._device = device
 
     def predict_j(self, grid):
-        """grid: (16,) numpy int64 → Python float."""
+        f"""grid: ({N2},) numpy int64 → Python float."""
         x = torch.from_numpy(np.asarray(grid, dtype=np.int64)).unsqueeze(0).to(self._device)
         with torch.inference_mode():
             val = self._model(x).item()
         return val
 
     def predict_j_batch(self, grids):
-        """grids: (B, 16) numpy int64 → (B,) tensor on device."""
+        f"""grids: (B, {N2}) numpy int64 → (B,) tensor on device."""
         x = torch.from_numpy(np.asarray(grids, dtype=np.int64)).to(self._device)
         with torch.inference_mode():
             val = self._model(x).squeeze(-1)
@@ -101,7 +104,7 @@ class OfficialModelWrapper:
 
 def load_official_model(model_path, use_gpu=False):
     device = torch.device("cuda" if (use_gpu and torch.cuda.is_available()) else "cpu")
-    model = ResnetModel().to(device)
+    model = ResnetModel(state_dim=N2, one_hot_depth=N2).to(device)
     state_dict = torch.load(model_path, map_location=device, weights_only=True)
     # 剥离 DataParallel 的 module. 前缀
     state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}

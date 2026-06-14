@@ -1,7 +1,7 @@
 ---
 plan_name: DeepCubeA 官方模型适配 24-Puzzle
 related_request: "wiki/request/huarongdao-n5-official-model.md"
-status: waiting
+status: executing
 created_at: 2026-06-14 20:00:00
 ---
 # 执行计划：DeepCubeA 官方模型适配 24-Puzzle
@@ -25,10 +25,13 @@ created_at: 2026-06-14 20:00:00
 | 键 | 旧值 | 新值 | 说明 |
 |---|---|---|---|
 | `HUARONGDAO_N` | `4` | `5` | N=4→N=5 |
-| `DEEPCUBEA_OFFICIAL_MODEL_PATH` | `"data/model_state_dict.pt"` | `"DeepCubeA/saved_models/puzzle24/current/model_state_dict.pt"` | 指向 puzzle24 预训练模型 |
-| `DEEPCUBEA_OFFICIAL_DATA_DIR` | `"data/"` | `"data/puzzle24/"` | puzzle24 测试数据独立目录 |
+| `DEEPCUBEA_OFFICIAL_MODEL_PATH` | `"data/model_state_dict.pt"` | `"data/model_state_dict.pt"` | 不变，模型文件从 DeepCubeA 目录拷贝到 data/ |
+| `DEEPCUBEA_OFFICIAL_DATA_DIR` | `"data/"` | `"data/"` | 不变，分支专属直接覆盖 data/ 下文件 |
+| `DEEPCUBEA_OFFICIAL_USE_OFFICIAL_DATA` | `False` | `True` | 启用官方测试数据 |
 
 其余参数不变（`T_MAX=500`, `MAX_EXPAND_NODES=10000`, `LAMBDA=1.0` 等）。
+
+> **修正**：数据文件和模型文件直接放在 `data/` 根目录下，不创建子目录。这是 24-puzzle 专属分支，`data/` 下的文件由 git 跟踪，文件被直接覆盖为 puzzle24 版本。
 
 ### 2. `deepcubea_official_network.py`
 
@@ -64,9 +67,8 @@ d = pickle.load(open("DeepCubeA/data/puzzle24/test/data_0.pkl", "rb"))
 tiles = np.array([s.tiles.astype(np.int64) for s in d["states"]])
 solution_lengths = np.array([len(s) for s in d["solutions"]], dtype=np.int64)
 
-Path("data/puzzle24").mkdir(parents=True, exist_ok=True)
-np.save("data/puzzle24/tiles.npy", tiles)
-np.save("data/puzzle24/solution_lengths.npy", solution_lengths)
+np.save("data/tiles.npy", tiles)
+np.save("data/solution_lengths.npy", solution_lengths)
 print(f"Saved: {tiles.shape}, lengths [{solution_lengths.min()}, {solution_lengths.max()}]")
 ```
 
@@ -74,10 +76,10 @@ print(f"Saved: {tiles.shape}, lengths [{solution_lengths.min()}, {solution_lengt
 
 | 步骤ID | 任务描述 | 前置依赖 | 交付物/修改路径 | 状态 |
 |---|---|---|---|---|
-| `S0` | 数据预处理：转换 puzzle24 pickle → numpy | 无 | `data/puzzle24/tiles.npy`, `data/puzzle24/solution_lengths.npy` | 待完成 |
-| `S1` | 修改 `config.py`：HUARONGDAO_N=5 + 官方路径 | 无 | `config.py` | 待完成 |
-| `S2` | 修改 `deepcubea_official_network.py`：ResnetModel 维度从 config 推导 | 无 | `deepcubea_official_network.py` | 待完成 |
-| `S3` | 冒烟测试：加载模型 + 单状态 J(s) 预测 | `S1`, `S2` | 终端输出验证 | 待完成 |
+| `S0` | 数据预处理：转换 puzzle24 pickle → numpy | 无 | `data/tiles.npy`, `data/solution_lengths.npy` | 已完成 |
+| `S1` | 修改 `config.py`：HUARONGDAO_N=5 + 路径 | 无 | `config.py` | 已完成 |
+| `S2` | 修改 `deepcubea_official_network.py`：ResnetModel 维度从 config 推导（Option B） | 无 | `deepcubea_official_network.py` | 已完成 |
+| `S3` | 冒烟测试：加载模型 + tiles[0]/tiles[-1] J(s) 预测 | `S1`, `S2` | 终端输出：J=104.11/89.16 通过 | 已完成 |
 | `S4` | 方案 A — Bellman MSE 评估 | `S0`, `S3` | 终端输出 | 待完成 |
 | `S5` | 方案 C — 加权 A* 评估 | `S0`, `S3` | 终端输出 | 待完成 |
 
@@ -121,3 +123,8 @@ print(f"Saved: {tiles.shape}, lengths [{solution_lengths.min()}, {solution_lengt
 
 - `2026-06-14 20:00`: 计划已生成，待用户确认后执行
 - `2026-06-14 20:30`: 用户确认计划，补充 S3 冒烟通过标准 + 代码审查确认（ResnetModel 调用点 + docstring 更新）
+- `2026-06-14 22:18`: S0 完成 —— `data/tiles.npy` (496,25) int64 + `data/solution_lengths.npy` (496,) int64，解长度 64-110 mean=89.4
+- `2026-06-14 22:20`: S1 完成 —— `HUARONGDAO_N=4→5`，`DEEPCUBEA_OFFICIAL_MODEL_PATH`/`DATA_DIR` 不变，`USE_OFFICIAL_DATA=False→True`
+- `2026-06-14 22:20`: S2 完成 —— Option B：`load_official_model()` L107 显式传参 `state_dim=N2, one_hot_depth=N2`，docstring 更新
+- `2026-06-14 22:21`: 用户修正 —— 删除 `data/puzzle24/` 子目录，文件直接放 `data/` 根目录；模型文件从 `DeepCubeA/` 拷贝到 `data/model_state_dict.pt`
+- `2026-06-14 22:22`: S3 冒烟通过 —— J(s₀)=104.11, J(sₙ)=89.16，均在 [25, 140] 范围

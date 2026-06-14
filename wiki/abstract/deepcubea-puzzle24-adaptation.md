@@ -8,31 +8,34 @@ source_contents:
   - "deepcubea_official_search.py"
   - "DeepCubeA/saved_models/puzzle24/"
   - "DeepCubeA/data/puzzle24/test/data_0.pkl"
+  - "data/tiles.npy"
+  - "data/solution_lengths.npy"
+  - "data/model_state_dict.pt"
 dependencies:
   - "wiki/abstract/deepcubea-official-model-evaluation.md"
   - "wiki/abstract/deepcubea-official-repo.md"
   - "wiki/abstract/docs/deepcubea-research.md"
 created_at: 2026-06-14 20:00:00
-updated_at: 2026-06-14 20:30:00
+updated_at: 2026-06-14 22:22:00
 ---
 # 摘要：DeepCubeA 24-Puzzle 适配计划
 
 ## 核心结论与关键信息
 
 - **变更规模极小**：仅 2 个文件需要修改代码（`config.py` + `deepcubea_official_network.py`），其余 7 个文件已 N 泛型自动适配
-- **config.py**：`HUARONGDAO_N=4→5`，`DEEPCUBEA_OFFICIAL_MODEL_PATH` 指向 puzzle24，`DEEPCUBEA_OFFICIAL_DATA_DIR` 改为 `data/puzzle24/`
-- **deepcubea_official_network.py**：`ResnetModel` 参数 `state_dim=N², one_hot_depth=N²` 从 `HUARONGDAO_N` 推导（替换硬编码 16），`predict_j`/`predict_j_batch` docstring 中 `(16,)` → `(N2,)`
-- **ResnetModel 调用点确认**：唯一调用在 `load_official_model()` L104，不传参完全依赖默认值，改默认值自动覆盖
+- **config.py**：`HUARONGDAO_N=4→5`，`USE_OFFICIAL_DATA=False→True`；`MODEL_PATH`/`DATA_DIR` 不变（分支专属，data/ 下文件直接覆盖）
+- **模型文件**：从 `DeepCubeA/saved_models/puzzle24/current/model_state_dict.pt` 拷贝到 `data/model_state_dict.pt`（62MB）
+- **deepcubea_official_network.py**（Option B）：`load_official_model()` L107 显式传参 `state_dim=N2, one_hot_depth=N2`；`predict_j`/`predict_j_batch` docstring 更新；ResnetModel 默认值不变
 - **参数不变**：T_MAX/MAX_EXPAND_NODES/LAMBDA 等沿用 15-puzzle 值
 - **仅评估不做训练**
-- **数据预处理**：`data_0.pkl`（496 状态，tiles uint8，解路径 64-110 mean 89.4）→ `data/puzzle24/tiles.npy (int64)` + `solution_lengths.npy (int64)`。dtype 选 int64 避免 `_GOAL_BYTES` 比较失败（历史 Bug）
-- **模型**：62MB，puzzle24 官方 ResnetModel，DataParallel 训练（`module.` 前缀自动剥离）
-- **核心风险**：`MAX_EXPAND_NODES=10000` 对 puzzle24 可能太低（15-puzzle 官方展开 196-466 万节点）；先用 10000 跑，胜率 0% 则调大
-- **S3 冒烟通过标准**：取 `tiles[0]` 和 `tiles[-1]` 各测一次，`25 ≤ J(s) ≤ 140` 通过，负值/NaN 失败，`>200` 可疑不阻断
+- **数据预处理**：`data_0.pkl`（496 状态，tiles uint8，解路径 64-110 mean 89.4）→ `data/tiles.npy (496,25) int64` + `data/solution_lengths.npy (496,) int64`。dtype 选 int64 避免 `_GOAL_BYTES` 比较失败（历史 Bug 复盘教训）
+- **模型**：62MB，puzzle24 官方 ResnetModel，DataParallel 训练（`module.` 前缀自动剥离），fc1.weight [5000,625]=N²×N² 确认匹配
+- **核心风险**：`MAX_EXPAND_NODES=10000` 对 puzzle24 极低（官方展开 85M~15B 节点）；先 10000 冒烟验证 pipeline 通畅，后续由用户调整
+- **S3 冒烟通过**：J(s₀)=104.11, J(sₙ)=89.16，均在 [25, 140]，PASS
 
 ## 内容概述
 
-> 计划文档定义了 6 个步骤（S0-S5）：数据预处理 → config 修改 → 网络适配 → 冒烟测试 → Bellman MSE 评估 → 加权 A* 评估。需求文档记录了约束条件和关键决策。计划已通过用户确认，补充了 S3 冒烟通过标准和代码审查确认。
+> S0-S3 已完成，S4-S5 待执行。修正：数据/模型文件直接放 `data/` 根目录，不创建 `puzzle24/` 子目录（分支专属）。
 
 ## 依赖与影响链
 
