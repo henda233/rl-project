@@ -15,7 +15,7 @@ dependencies:
   - "wiki/abstract/deepcubea-search.md"
   - "wiki/abstract/deepcubea-network.md"
 created_at: 2026-06-13 23:50
-updated_at: 2026-06-14 17:30
+updated_at: 2026-06-14 18:30
 ---
 # 摘要：DeepCubeA 官方预训练模型评估计划
 
@@ -30,6 +30,8 @@ updated_at: 2026-06-14 17:30
 - **Bellman MSE 已验证**（修复后）：Overall mean=0.362, median=0.202, std=0.371；分档结果正常（Str1: 0.175, Str2: 0.209, Str3: 0.699），MSE 随解长度增大符合预期
 - **三项评估**：Bellman MSE（始终执行）+ 纯贪心展开（argmin J(s') 步步跟随，max_steps 上限）+ Full A*（λ=1.0 加权 A*）
 - **已知 Bug：ptr_per_state 索引错误**（2026-06-14）：`_compute_bellman_errors_official` 中 start/end 标记成对存储但取值步长=1 而非 2，导致奇数索引 state 拿到 0 children → error=J(s)²；修复方案 B（offsets 单条记录）已应用。根因分析：children 收集与父 state 错位，模型参数和 J(s) 预测本身正确
+- **已知 Bug：weighted_astar_official blank_idx 硬编码 0**（2026-06-14）：`g_score` 初始化 `blank_idx=0` 而非起始状态空格实际位置，导致 A* 从第一步生成错误孩子 → 搜索树全部错位 → 方案 C 胜率 0%；修复：`start_blank_idx = int(np.argmin(start_grid_flat))` + 补上 `closed` set + `tiebreaker` + goal 短路判断
+- **已知 Bug：_GOAL_BYTES dtype 不匹配 int32 vs int64**（2026-06-14）：`_GOAL_GRID` 为 int32（68 bytes），但 tiles.npy + `_generate_test_states` 均为 int64（136 bytes），`tobytes()` 比较永远 False → A* 永远无法识别目标状态 → 胜率 0%；修复：`_GOAL_GRID` dtype 改为 `np.int64`。教训：bytes 比较对 dtype 敏感，跨模块共享目标状态常量时务必统一 dtype
 - **难度分档**：按 `solutions` 实际解路径长度排序后三等分（短/中/长各约 167 个）
 - **Config 键**：新增 `DEEPCUBEA_OFFICIAL_*` 8 键 + `DEEPCUBEA_GREEDY_MAX_STEPS`；重命名 `DEEPCUBEA_VAL_GREEDY_EXPAND` → `DEEPCUBEA_VAL_GREEDY_MAX_STEPS`（语义：节点上限→步数上限）
 - **测试数据来源开关**（2026-06-14）：新增 `DEEPCUBEA_OFFICIAL_USE_OFFICIAL_DATA` 布尔开关（默认 True）；False 时随机游走生成测试数据 + K 代理分层，新增 3 配置键（T_MIN/T_MAX/NUM_TEST_STATES），种子复用 `DEEPCUBEA_VAL_SEED`

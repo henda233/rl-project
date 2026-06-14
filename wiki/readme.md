@@ -58,7 +58,8 @@ wiki/
 10. **了解 DeepCubeA 训练 Loss 分析** → `abstract/docs/deepcubea-loss-analysis.md`
 11. **了解 PPO + J(s) 势函数塑形分析** → `abstract/docs/ppo-deepcubea-shaping-analysis.md`
 12. **了解官方预训练模型评估** → `abstract/deepcubea-official-model-evaluation.md`
-13. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
+13. **了解官方模型评估 Bug 复盘** → `abstract/docs/deepcubea-official-bug-postmortem.md`
+14. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
 
 ## 当前状态
 

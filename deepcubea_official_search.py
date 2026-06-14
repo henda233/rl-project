@@ -18,7 +18,7 @@ from deepcubea_official_data import load_official_test_data
 
 N2 = HUARONGDAO_N * HUARONGDAO_N
 N = HUARONGDAO_N
-_GOAL_GRID = np.array(list(range(1, N2)) + [0], dtype=np.int32)
+_GOAL_GRID = np.array(list(range(1, N2)) + [0], dtype=np.int64)
 _GOAL_BYTES = _GOAL_GRID.tobytes()
 
 
@@ -229,36 +229,29 @@ def weighted_astar_official(start_grid_flat, model, lambda_weight=None, max_expa
     if max_expand is None:
         max_expand = DEEPCUBEA_OFFICIAL_MAX_EXPAND_NODES
 
-    h_start = model.predict_j(start_grid_flat)
     start_bytes = start_grid_flat.tobytes()
-    open_set = [(lambda_weight * 0 + h_start, 0, start_bytes, start_grid_flat, None, None, 0)]
-    heapq.heapify(open_set)
-    g_score = {start_bytes: (0, None, None, 0)}
+    if start_bytes == _GOAL_BYTES:
+        return [], 0
 
+    start_blank_idx = int(np.argmin(start_grid_flat))
+    h_start = model.predict_j(start_grid_flat)
+    open_set = [(lambda_weight * 0 + h_start, 0, start_bytes)]
+    tiebreaker = 1
+    g_score = {start_bytes: (0, None, None, start_blank_idx)}
+    closed = set()
     expanded = 0
 
-    while open_set:
-        f_val, g_val, current_bytes, current_grid, _, _, _ = heapq.heappop(open_set)
+    while open_set and expanded < max_expand:
+        f_val, _, current_bytes = heapq.heappop(open_set)
 
-        if current_bytes == _GOAL_BYTES:
-            path = []
-            cur_bytes = current_bytes
-            while cur_bytes != start_bytes:
-                _, parent_bytes, action, _ = g_score[cur_bytes]
-                path.append(action)
-                cur_bytes = parent_bytes
-            path.reverse()
-            return path, expanded + 1
-
-        expanded += 1
-        if expanded >= max_expand:
-            return None, expanded
-
-        entry = g_score.get(current_bytes)
-        if entry is None or entry[0] < g_val:
+        if current_bytes in closed:
             continue
+        closed.add(current_bytes)
+        expanded += 1
 
-        _, _, _, blank_idx = entry
+        g_val, _, _, blank_idx = g_score[current_bytes]
+        current_grid = np.frombuffer(current_bytes, dtype=np.int64).copy()
+
         children_info = get_children(current_grid, blank_idx)
 
         if children_info:
@@ -267,11 +260,28 @@ def weighted_astar_official(start_grid_flat, model, lambda_weight=None, max_expa
             for idx, (child, action, new_blank_idx) in enumerate(children_info):
                 new_g = g_val + 1
                 child_bytes = child.tobytes()
+
+                if child_bytes in closed:
+                    continue
+
                 existing = g_score.get(child_bytes)
-                if existing is None or new_g < existing[0]:
-                    g_score[child_bytes] = (new_g, current_bytes, action, new_blank_idx)
-                    f = lambda_weight * new_g + child_h[idx]
-                    heapq.heappush(open_set, (f, new_g, child_bytes, child, current_bytes, action, new_blank_idx))
+                if existing is not None and new_g >= existing[0]:
+                    continue
+
+                if child_bytes == _GOAL_BYTES:
+                    path = [action]
+                    cur_bytes = current_bytes
+                    while cur_bytes != start_bytes:
+                        _, parent_bytes, a, _ = g_score[cur_bytes]
+                        path.append(a)
+                        cur_bytes = parent_bytes
+                    path.reverse()
+                    return path, expanded
+
+                g_score[child_bytes] = (new_g, current_bytes, action, new_blank_idx)
+                f = lambda_weight * new_g + child_h[idx]
+                heapq.heappush(open_set, (f, tiebreaker, child_bytes))
+                tiebreaker += 1
 
     return None, expanded
 
