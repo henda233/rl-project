@@ -15,7 +15,7 @@ dependencies:
   - "wiki/abstract/deepcubea-search.md"
   - "wiki/abstract/deepcubea-network.md"
 created_at: 2026-06-13 23:50
-updated_at: 2026-06-14 15:30
+updated_at: 2026-06-14 17:30
 ---
 # 摘要：DeepCubeA 官方预训练模型评估计划
 
@@ -32,15 +32,16 @@ updated_at: 2026-06-14 15:30
 - **已知 Bug：ptr_per_state 索引错误**（2026-06-14）：`_compute_bellman_errors_official` 中 start/end 标记成对存储但取值步长=1 而非 2，导致奇数索引 state 拿到 0 children → error=J(s)²；修复方案 B（offsets 单条记录）已应用。根因分析：children 收集与父 state 错位，模型参数和 J(s) 预测本身正确
 - **难度分档**：按 `solutions` 实际解路径长度排序后三等分（短/中/长各约 167 个）
 - **Config 键**：新增 `DEEPCUBEA_OFFICIAL_*` 8 键 + `DEEPCUBEA_GREEDY_MAX_STEPS`；重命名 `DEEPCUBEA_VAL_GREEDY_EXPAND` → `DEEPCUBEA_VAL_GREEDY_MAX_STEPS`（语义：节点上限→步数上限）
+- **测试数据来源开关**（2026-06-14）：新增 `DEEPCUBEA_OFFICIAL_USE_OFFICIAL_DATA` 布尔开关（默认 True）；False 时随机游走生成测试数据 + K 代理分层，新增 3 配置键（T_MIN/T_MAX/NUM_TEST_STATES），种子复用 `DEEPCUBEA_VAL_SEED`
 
 ## 内容概述
 
 > **交付物**（3 新文件 + 3 数据文件 + 2 修改文件）：
 > - `deepcubea_official_network.py`：ResnetModel（15M 参数，BN，内部 one_hot）+ OfficialModelWrapper（predict_j / predict_j_batch）+ load_official_model（自动剥离 `module.` 前缀）
 > - `deepcubea_official_data.py`：`load_official_test_data`（纯 np.load）
-> - `deepcubea_official_search.py`：`stratified_bellman_mse_official`（始终执行）、`_greedy_expand_official`（纯贪心）、`greedy_expansion_eval_official`（Flag）、`weighted_astar_official`（λ=1.0）、`evaluate_official`（Flag）
+> - `deepcubea_official_search.py`：`stratified_bellman_mse_official`（始终执行）、`_greedy_expand_official`（纯贪心）、`greedy_expansion_eval_official`（Flag）、`weighted_astar_official`（λ=1.0）、`evaluate_official`（Flag）、`_generate_test_states`（随机游走生成测试数据，支持非官方数据模式）
 > - `data/tiles.npy` + `data/solution_lengths.npy` + `data/model_state_dict.pt`（55MB）
-> - 修改：`deepcubea_search.py`（贪心改为纯 argmin J(s')）、`config.py`（新增 9 键 + 重命名 1 键）
+> - 修改：`deepcubea_search.py`（贪心改为纯 argmin J(s')）、`config.py`（新增 9 键 + 重命名 1 键 → 新增 13 键 + 重命名 1 键）
 
 ## 依赖与影响链
 

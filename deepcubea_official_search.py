@@ -7,7 +7,10 @@ from config import (
     DEEPCUBEA_OFFICIAL_LAMBDA, DEEPCUBEA_OFFICIAL_MAX_EXPAND_NODES,
     DEEPCUBEA_OFFICIAL_NUM_STRATA, DEEPCUBEA_OFFICIAL_GREEDY_MAX_STEPS,
     DEEPCUBEA_OFFICIAL_GREEDY_FLAG, DEEPCUBEA_OFFICIAL_ASTAR_FLAG,
-    DEEPCUBEA_INFERENCE_USE_GPU,
+    DEEPCUBEA_OFFICIAL_USE_OFFICIAL_DATA,
+    DEEPCUBEA_OFFICIAL_T_MIN, DEEPCUBEA_OFFICIAL_T_MAX,
+    DEEPCUBEA_OFFICIAL_NUM_TEST_STATES,
+    DEEPCUBEA_INFERENCE_USE_GPU, DEEPCUBEA_VAL_SEED,
 )
 from deepcubea_network import transition, get_children
 from deepcubea_official_network import load_official_model
@@ -17,6 +20,23 @@ N2 = HUARONGDAO_N * HUARONGDAO_N
 N = HUARONGDAO_N
 _GOAL_GRID = np.array(list(range(1, N2)) + [0], dtype=np.int32)
 _GOAL_BYTES = _GOAL_GRID.tobytes()
+
+
+def _generate_test_states(num_states, min_steps, max_steps, rng):
+    """Generate solvable test states by random walk from goal."""
+    states = []
+    k_values = np.empty(num_states, dtype=np.int32)
+    for i in range(num_states):
+        t = int(rng.integers(min_steps, max_steps + 1))
+        k_values[i] = t
+        grid = _GOAL_GRID.copy()
+        for _ in range(t):
+            action = int(rng.integers(0, 4))
+            child = transition(grid, action)
+            if child is not None:
+                grid = child
+        states.append(grid)
+    return np.array(states, dtype=np.int64), k_values
 
 
 def _compute_bellman_errors_official(states, model):
@@ -67,7 +87,8 @@ def _compute_bellman_errors_official(states, model):
     return errors
 
 
-def stratified_bellman_mse_official(tiles, solution_lengths, model, num_strata):
+def stratified_bellman_mse_official(tiles, solution_lengths, model, num_strata,
+                                    stratify_label="Len"):
     """Stratified Bellman MSE by solution length — always executed.
 
     Sorts by solution_lengths, splits into num_strata equal groups,
@@ -80,6 +101,8 @@ def stratified_bellman_mse_official(tiles, solution_lengths, model, num_strata):
     print("=" * 72)
     print("方案 A — Stratified Bellman MSE (Official Model)")
     print("=" * 72)
+    print(f"States: {n}  Strata: {num_strata}  Stratify by: {stratify_label}")
+    print()
 
     overall_errors = []
     for s in range(num_strata):
@@ -132,7 +155,8 @@ def _greedy_expand_official(start_grid_flat, model, max_steps):
     return None, max_steps
 
 
-def greedy_expansion_eval_official(tiles, solution_lengths, model, max_steps):
+def greedy_expansion_eval_official(tiles, solution_lengths, model, max_steps,
+                                   stratify_label="Len"):
     """Greedy expansion stratified by solution length — flag-controlled."""
     n = len(tiles)
     num_strata = DEEPCUBEA_OFFICIAL_NUM_STRATA
@@ -146,7 +170,8 @@ def greedy_expansion_eval_official(tiles, solution_lengths, model, max_steps):
     print(f"States: {n}  Max Steps: {max_steps}")
     print()
 
-    header = f"{'Stratum':<10} {'Len Range':<16} {'Count':<8} {'Solved':<10} {'Rate %':<10} {'Avg Steps':<12} {'Avg Len':<10}"
+    range_header = f"{stratify_label} Range"
+    header = f"{'Stratum':<10} {range_header:<16} {'Count':<8} {'Solved':<10} {'Rate %':<10} {'Avg Steps':<12} {'Avg Len':<10}"
     print(header)
     print("-" * len(header))
 
@@ -251,7 +276,8 @@ def weighted_astar_official(start_grid_flat, model, lambda_weight=None, max_expa
     return None, expanded
 
 
-def evaluate_official(tiles, solution_lengths, model, max_expand=None, lambda_weight=None):
+def evaluate_official(tiles, solution_lengths, model, max_expand=None, lambda_weight=None,
+                      stratify_label="Len"):
     """Full weighted A* stratified by solution length — flag-controlled."""
     if lambda_weight is None:
         lambda_weight = DEEPCUBEA_OFFICIAL_LAMBDA
@@ -270,7 +296,8 @@ def evaluate_official(tiles, solution_lengths, model, max_expand=None, lambda_we
     print(f"Lambda: {lambda_weight}  Max Expand: {max_expand:,}  States: {n}")
     print()
 
-    header = f"{'Stratum':<10} {'Len Range':<16} {'Count':<8} {'Solved':<10} {'Rate %':<10} {'Avg Expand':<14} {'Avg Len':<10}"
+    range_header = f"{stratify_label} Range"
+    header = f"{'Stratum':<10} {range_header:<16} {'Count':<8} {'Solved':<10} {'Rate %':<10} {'Avg Expand':<14} {'Avg Len':<10}"
     print(header)
     print("-" * len(header))
 
@@ -334,21 +361,36 @@ if __name__ == "__main__":
     load_time = time.perf_counter() - t0
     print(f"Official model loaded in {load_time:.2f}s (device={model._device})\n")
 
-    # Load data
-    tiles, solution_lengths = load_official_test_data(data_dir)
-    print(f"Test data: {tiles.shape}, solution lengths [{solution_lengths.min()}, {solution_lengths.max()}] "
-          f"mean={solution_lengths.mean():.1f}\n")
+    # Load or generate test data
+    if DEEPCUBEA_OFFICIAL_USE_OFFICIAL_DATA:
+        tiles, solution_lengths = load_official_test_data(data_dir)
+        stratify_label = "Len"
+        print(f"Test data: {tiles.shape}, solution lengths [{solution_lengths.min()}, {solution_lengths.max()}] "
+              f"mean={solution_lengths.mean():.1f}\n")
+    else:
+        rng = np.random.default_rng(DEEPCUBEA_VAL_SEED)
+        num_states = DEEPCUBEA_OFFICIAL_NUM_TEST_STATES
+        tiles, k_values = _generate_test_states(num_states,
+                                                 DEEPCUBEA_OFFICIAL_T_MIN,
+                                                 DEEPCUBEA_OFFICIAL_T_MAX, rng)
+        solution_lengths = k_values
+        stratify_label = "K"
+        print(f"Generated test data: {tiles.shape}, K scramble steps [{k_values.min()}, {k_values.max()}] "
+              f"mean={k_values.mean():.1f}\n")
 
     # 方案 A — Bellman MSE (always)
     stratified_bellman_mse_official(tiles, solution_lengths, model,
-                                    num_strata=DEEPCUBEA_OFFICIAL_NUM_STRATA)
+                                    num_strata=DEEPCUBEA_OFFICIAL_NUM_STRATA,
+                                    stratify_label=stratify_label)
 
     # 方案 B — Greedy Expansion (flag-controlled)
     if DEEPCUBEA_OFFICIAL_GREEDY_FLAG:
         greedy_expansion_eval_official(tiles, solution_lengths, model,
-                                       max_steps=DEEPCUBEA_OFFICIAL_GREEDY_MAX_STEPS)
+                                       max_steps=DEEPCUBEA_OFFICIAL_GREEDY_MAX_STEPS,
+                                       stratify_label=stratify_label)
 
     # 方案 C — Full A* (flag-controlled)
     if DEEPCUBEA_OFFICIAL_ASTAR_FLAG:
         evaluate_official(tiles, solution_lengths, model,
-                          max_expand=max_expand, lambda_weight=lambda_weight)
+                          max_expand=max_expand, lambda_weight=lambda_weight,
+                          stratify_label=stratify_label)
