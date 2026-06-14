@@ -36,5 +36,5 @@ updated_at: 2026-06-13 23:50
 ## 依赖与影响链
 
 - **上游依赖**：`wiki/abstract/docs/deepcubea-research.md`（论文原理）
-- **下游被依赖**：`wiki/plan/deepcubea-official-model-evaluation.md`（适配评估计划）
+- **下游被依赖**：`wiki/plan/deepcubea-official-model-evaluation.md`（适配评估计划）、`wiki/abstract/deepcubea-bwas-analysis.md`（BWAS 分析）
 - **变更扩散评估**：低（纯笔记，不修改代码）

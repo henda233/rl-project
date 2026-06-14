@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-14 18:45
+> 🔄 最后同步：2026-06-14 19:00
 
 ## 模块总览
 
@@ -23,6 +23,7 @@
 | `DeepCubeA 官方仓库探索` | [🔗](./abstract/deepcubea-official-repo.md) | ResnetModel vs DeepCubeANetwork 架构对比、NPuzzleState、AVI 训练流程、puzzle15 预训练模型 | ✅ |
 | `DeepCubeA 官方模型评估计划` | [🔗](./abstract/deepcubea-official-model-evaluation.md) | 方案C pickle→numpy、直接移植 ResnetModel、OfficialModelWrapper 对齐 DeepCubeANetwork 接口、解长度排序三等分、8 个 DEEPCUBEA_OFFICIAL_* config 键、参考 search.py 核心函数 | ✅ |
 | `DeepCubeA 官方模型评估 Bug 复盘` | [🔗](./abstract/docs/deepcubea-official-bug-postmortem.md) | 3 个移植 bug（ptr_per_state 索引 + blank_idx 硬编码 + _GOAL_BYTES dtype）的症状/根因/修复/预防 | ✅ |
+| `DeepCubeA 官方 BWAS 分析` | [🔗](./abstract/deepcubea-bwas-analysis.md) | 官方 BWAS 架构详解、与我们 predict_j_batch 的等价性论证、不建议拷贝的决策 | ✅ |
 | `Gym 参考` | [🔗](./abstract/gymnasium/agent-training.md) / [custom-env](./abstract/gymnasium/custom-env.md) / [recording](./abstract/gymnasium/recording-agent.md) | ε-greedy 训练循环、Env 继承规范、Record wrapper | ✅ |
 | `参考代码` | [🔗](./abstract/examples/actor-critic-example.md) / [rl-utils](./abstract/examples/rl-utils.md) | PolicyNet/ValueNet、ReplayBuffer、on-policy 循环 | ✅ |
 
@@ -84,6 +85,7 @@ AVI 训练的核心问题：网络输出层无界（Linear→scalar），系统�
 
 ## 全局更新日志（近10条）
 
+- `06-14 19:00`: DeepCubeA 官方 BWAS 实现分析完成 —— 官方 AStar 类 + C++ parallel_weighted_astar 详解，核心结论：批量 GPU 推理我们已等价实现，多实例设计官方未实际启用，不建议拷贝；wiki 新增摘要/索引
 - `06-14 18:45`: DeepCubeA 官方模型评估 Bug 复盘完成 —— 3 个移植 bug 全面分析（ptr_per_state 索引 + blank_idx 硬编码 + _GOAL_BYTES dtype），5 条预防策略；wiki 新增摘要/索引
 - `06-14 18:00`: 修复 weighted_astar_official blank_idx 硬编码 0 bug —— A* 第一步生成错误孩子 → 方案 C 胜率 0%；补上 closed set + tiebreaker + goal 短路
 - `06-14 17:30`: DeepCubeA 官方搜索测试数据来源开关完成 —— config.py 新增 4 参数（USE_OFFICIAL_DATA/T_MIN/T_MAX/NUM_TEST_STATES），`deepcubea_official_search.py` 新增 `_generate_test_states` + `__main__` 分支 + 表头参数化（Len Range/K Range）；wiki 计划/摘要/index 同步更新

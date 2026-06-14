@@ -38,6 +38,7 @@ wiki/
 │   ├── switch-to-huarongdao.md
 │   ├── deepcubea-network.md
 │   ├── deepcubea-search.md
+│   ├── deepcubea-bwas-analysis.md
 │   ├── deepcubea-target-network.md
 │   └── deepcubea-online-validation.md
 ├── request/           // 用户需求
@@ -60,6 +61,7 @@ wiki/
 12. **了解官方预训练模型评估** → `abstract/deepcubea-official-model-evaluation.md`
 13. **了解官方模型评估 Bug 复盘** → `abstract/docs/deepcubea-official-bug-postmortem.md`
 14. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
+15. **了解官方 BWAS 分析** → `abstract/deepcubea-bwas-analysis.md`
 
 ## 当前状态
 
@@ -80,3 +82,4 @@ wiki/
 - ✅ PPO + DeepCubeA J(s) 势函数塑形可行性分析
 - ✅ DeepCubeA Checkpoint 与 Loss 图保存优化（latest.pt 覆盖式 + CSV + 累积曲线图每轮外层同步更新）
 - ✅ DeepCubeA 官方预训练模型评估框架（ResnetModel 移植 + 三项评估：Bellman MSE / 贪心展开 / A*）
+- ✅ DeepCubeA 官方 BWAS 实现分析（官方 AStar 类 + C++ 详解，核心结论：批量 GPU 推理已等价实现，不建议拷贝）
