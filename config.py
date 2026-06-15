@@ -105,3 +105,44 @@ PPO_DEEPCUBEA_RESNET_BLOCKS = 2          # 残差块数量
 PPO_DEEPCUBEA_J_MAX = 50              # J(s) 归一化上界（经验估计，S6 冒烟后调整）
 PPO_DEEPCUBEA_SAVE_INTERVAL = 10         # 模型/图表保存间隔（episode 数），0=禁用
 PPO_DEEPCUBEA_MODEL_PATH = "data/model_state_dict.pt"  # DeepCubeA 模型路径
+
+# ==================== QUBE-15 配置（qube15/ppo_train.py 使用） ====================
+
+# Hamiltonian 参数
+QUBE15_B = 1.0                          # 局域场强度
+QUBE15_J = 0.1                          # Ising 耦合常数
+QUBE15_LAMBDA = 5.0                     # 跨阶段软约束权重
+QUBE15_ALPHA = 0.1                      # 奖励缩放系数（对齐 PPO 奖励量级 ~[-4, 0]）
+
+# Phase 切换
+QUBE15_EPSILON = 0.5                    # Phase 切换阈值（per-tile ⟨Ĥ_k⟩/|S_k| < ε）
+QUBE15_SLIDING_WINDOW = 100             # 滑动平均窗口大小（episode 数）
+QUBE15_PHASE_SWITCH_K = 3               # 连续 K 次检查通过才切换 Phase（防止噪声触发）
+
+# 各 Phase 打乱步数
+QUBE15_SHUFFLE_STEPS_P1 = 25
+QUBE15_SHUFFLE_STEPS_P2 = 50
+QUBE15_SHUFFLE_STEPS_P3 = 70
+QUBE15_SHUFFLE_STEPS_P4 = 100
+
+# 各 Phase 最大步数
+QUBE15_MAX_STEPS_P1 = 80
+QUBE15_MAX_STEPS_P2 = 150
+QUBE15_MAX_STEPS_P3 = 200
+QUBE15_MAX_STEPS_P4 = 300
+
+# PPO 训练参数
+QUBE15_HIDDEN_DIM = 256                 # 隐藏层维度（ResBlock+LN 网络）
+QUBE15_ACTOR_LR = 1e-3                  # Actor 学习率
+QUBE15_CRITIC_LR = 1e-3                 # Critic 学习率
+QUBE15_GAMMA = 0.98                     # 折扣因子
+QUBE15_LMBDA = 0.95                     # GAE λ
+QUBE15_EPOCHS = 10                      # 每批数据训练轮数
+QUBE15_EPS = 0.2                        # Clip 范围
+QUBE15_NUM_EPISODES = 10000             # 训练总 episode 数（所有 phase 合计）
+QUBE15_EVAL_INTERVAL = 500              # 评估间隔（episode 数）
+QUBE15_NUM_EVAL_EPISODES = 10           # 每次评估运行的 episode 数
+QUBE15_ENTROPY_COEF = 0.05              # 熵正则化系数
+QUBE15_RESNET_BLOCKS = 2                # 残差块数量
+QUBE15_USE_GPU = True                  # 是否使用 GPU 训练
+QUBE15_SAVE_INTERVAL = 10               # 模型/图表保存间隔（episode 数），0=禁用

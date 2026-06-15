@@ -9,7 +9,7 @@
 
 **技术栈**：Python 3.12, numpy, pytorch, tqdm, matplotlib, gymnasium
 
-**核心代码**：`env_digital_huarongdao.py`（环境）、`ppo_agent.py`（PPO）、`ppo_rnd_agent.py`（PPO+RND）、`config.py`（配置）、`deepcubea_network.py`（网络/编码/转移）、`deepcubea_train.py`（批量更新+固定目标AVI+θ_c阈值更新）、`deepcubea_search.py`（加权A*搜索+贪心展开+评估）、`deepcubea_generate_data.py`（训练数据生成）、`deepcubea_utils.py`（共享状态生成）、`deepcubea_official_network.py`（官方ResnetModel移植+OfficialModelWrapper）、`deepcubea_official_data.py`（官方测试数据加载）、`deepcubea_official_search.py`（官方模型三项评估）
+**核心代码**：`env_digital_huarongdao.py`（环境）、`ppo_agent.py`（PPO）、`ppo_rnd_agent.py`（PPO+RND）、`config.py`（配置）、`deepcubea_network.py`（网络/编码/转移）、`deepcubea_train.py`（批量更新+固定目标AVI+θ_c阈值更新）、`deepcubea_search.py`（加权A*搜索+贪心展开+评估）、`deepcubea_generate_data.py`（训练数据生成）、`deepcubea_utils.py`（共享状态生成）、`deepcubea_official_network.py`（官方ResnetModel移植+OfficialModelWrapper）、`deepcubea_official_data.py`（官方测试数据加载）、`deepcubea_official_search.py`（官方模型三项评估）、`qube15/quantum_state.py`（量子态坐标映射）、`qube15/hamiltonian.py`（Ising Hamiltonian 密集奖励）、`qube15/ppo_train.py`（ResBlock+LN PPO + 四阶段 curriculum）
 
 ## WIKI 结构
 
@@ -24,6 +24,8 @@ wiki/
 │   │   ├── deepcubea-research.md
 │   │   ├── deepcubea-loss-analysis.md
 │   │   ├── deepcubea-official-bug-postmortem.md
+│   │   ├── qube-paper.md
+│   │   ├── qube15-derivation.md
 │   │   └── ppo-deepcubea-shaping-analysis.md
 │   ├── gymnasium/     // gymnasium 参考文档摘要
 │   │   ├── agent-training.md
@@ -46,6 +48,8 @@ wiki/
 │   ├── deepcubea-official-repo.md
 │   ├── deepcubea-puzzle24-adaptation.md
 │   ├── ppo-deepcubea-agent.md
+│   ├── qube-code.md
+│   ├── qube15-implementation.md
 │   └── deepcubea-network-architecture-comparison.md
 ├── request/           // 用户需求
 └── plan/              // 执行计划
@@ -61,6 +65,8 @@ wiki/
 6. **官方模型评估系列** → `abstract/deepcubea-official-model-evaluation.md`、`abstract/docs/deepcubea-official-bug-postmortem.md`、`abstract/deepcubea-bwas-analysis.md`、`abstract/deepcubea-network-architecture-comparison.md`
 7. **24-Puzzle 适配** → `abstract/deepcubea-puzzle24-adaptation.md`
 8. **参考文档** → `abstract/gymnasium/`、`abstract/examples/`
+9. **QUBE 量子魔方** → `abstract/docs/qube-paper.md`、`abstract/qube-code.md`
+10. **QUBE-15 量子华容道** → `abstract/docs/qube15-derivation.md`、`abstract/qube15-implementation.md`、`plan/qube15-implementation.md`
 
 ## 当前状态
 
@@ -71,3 +77,5 @@ wiki/
 - ✅ PPO + DeepCubeA J(s) 势函数塑形（方案 A，γ=0.98）
 - ✅ 工程优化：config 整理、Checkpoint/Loss 图保存优化
 - ✅ 24-Puzzle 适配（仅评估，不训练）
+- ✅ QUBE 量子魔方环境跑通（52 测试通过，仅 numpy 依赖）
+- ⏳ QUBE-15 量子华容道密集奖励（S1-S4 完成，S5 训练待执行）

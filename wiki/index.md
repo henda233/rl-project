@@ -1,6 +1,6 @@
 # WIKI Index（全局摘要索引）
 
-> 🔄 最后同步：2026-06-15 20:00
+> 🔄 最后同步：2026-06-16 01:45
 
 ## 模块总览
 
@@ -27,6 +27,10 @@
 | `DeepCubeA 官方 BWAS 分析` | [🔗](./abstract/deepcubea-bwas-analysis.md) | 官方 BWAS 架构详解、与我们 predict_j_batch 的等价性论证、不建议拷贝的决策 | ✅ |
 | `DeepCubeA 官方 vs 自研网络架构对比` | [🔗](./abstract/deepcubea-network-architecture-comparison.md) | 逐层对比：one-hot 内外、BN vs LN、ResBlock 归一化有无、激活顺序、参数量 ~15M vs ~1.3M | ✅ |
 | `DeepCubeA 24-Puzzle 适配` | [🔗](./abstract/deepcubea-puzzle24-adaptation.md) | N=4→5，改 2 文件（config + official_network），仅评估不训练，计划已完成 | ✅ |
+| `QUBE 论文` | [🔗](./abstract/docs/qube-paper.md) | 量子力学酉表示 + 4 个 Ising Hamiltonian → 魔方密集奖励，四阶段 DDQN | ✅ |
+| `QUBE 代码` | [🔗](./abstract/qube-code.md) | 量子魔方环境 + 52 单元测试通过，仅 numpy 依赖，Python 3.12 适配 | ✅ |
+| `QUBE-15 推导` | [🔗](./abstract/docs/qube15-derivation.md) | 15-puzzle 量子化：|k_x,k_y⟩ 单粒子态、四阶段 Ising Ĥ（行分组）、软约束累积、B=1/J=0.1/λ=5 | ✅ |
+| `QUBE-15 实现` | [🔗](./abstract/qube15-implementation.md) | quantum_state + hamiltonian + test(26 pass) + ppo_train(ResBlock+LN wrapper curriculum)，config 20 参数，冒烟通过 | ✅ |
 | `Gym 参考` | [🔗](./abstract/gymnasium/agent-training.md) / [custom-env](./abstract/gymnasium/custom-env.md) / [recording](./abstract/gymnasium/recording-agent.md) | ε-greedy 训练循环、Env 继承规范、Record wrapper | ✅ |
 | `参考代码` | [🔗](./abstract/examples/actor-critic-example.md) / [rl-utils](./abstract/examples/rl-utils.md) | PolicyNet/ValueNet、ReplayBuffer、on-policy 循环 | ✅ |
 
@@ -51,6 +55,7 @@
 | `DeepCubeA 官方搜索测试数据来源开关` | [🔗](./plan/deepcubea-official-data-switch.md) | completed |
 | `DeepCubeA 24-Puzzle 适配` | [🔗](./plan/deepcubea-puzzle24-adaptation.md) | completed |
 | `PPO + DeepCubeA J(s) 势函数塑形实现` | [🔗](./plan/ppo-deepcubea-agent.md) | completed |
+| `QUBE-15 量子 Hamiltonian 密集奖励实现` | [🔗](./plan/qube15-implementation.md) | executing（S1-S4 完成，S5 待训练） |
 
 ## TODO列表
 
@@ -67,6 +72,19 @@
 - **blank_idx=0 硬编码 bug**：g_score 初始化成 0 而非起始状态实际空格位置 → A* 第一步生成错误孩子 → 整个搜索树错位 → 胜率 0%。教训：idx/ptr 参数绝不能硬编码。
 - **data_0.pkl 结构**：`dict{states, solutions, num_nodes_generated, times}`，方案 C 转 `tiles.npy` + `solution_lengths.npy` 解除 pickle 模块路径依赖。
 
+### QUBE-15 踩坑记录
+
+- **NaN 梯度爆炸**：随机打乱状态的 Hamiltonian 奖励可达 -17 以下（软约束 λ=5 累积），无裁剪时造成 PPO 梯度爆炸 → NaN。修复：gradient clipping max_norm=0.5（actor + critic）+ reward clipping `max(r, -10)`。
+- **Windows GBK 编码**：`⟨Ĥ⟩`、`→` 等 Unicode 字符在 Windows 控制台 `print()` 时报 `UnicodeEncodeError`。修复：全部替换为 ASCII（`H/|S|`、`->`、`epsilon`/`lambda`/`alpha`）。matplotlib 图表标签不受影响。
+- **Phase 切换窗口**：100 episode 滑动窗口简单平均 + 单次低于 ε 切换。冒烟 100 episode 时 Phase 1 已有求解能力（ep 70-78 出现 3-27 step 求解）但一致性不足（solved% 0-30%），需要更多 episode 或更大 window 稳定指标。
+- **Wrapper 代理模式**：`HamiltonianRewardWrapper` 通过 `unwrapped` 属性修改底层 env 的 `shuffle_steps`/`max_steps`，不改变 env API，不修改现有代码。
+
+### QUBE Phase 1 踩坑记录
+
+- **Python 3.12 兼容性**：`self.assert_()` 在 Python 3.12 中已移除，需改为 `self.assertTrue()`。影响 Cube_unittest.py 中 TestPeriodicComposition 类 6 处。
+- **QUBE 代码范围**：仓库仅含量子魔方环境（baseline.py + Rubik.py + 测试），不含论文中的 DDQN 训练循环。RL 部分未开源。
+- **依赖极简**：仅 numpy，无任何 ML 框架（TensorFlow/PyTorch）。
+
 ### 其他设计决策
 
 - **非法动作惩罚替代 Action Masking**：Action Masking 导致采样/更新分布不一致，ratio 溢出 NaN。
@@ -76,6 +94,10 @@
 
 ## 全局更新日志（近10条）
 
+- `06-16 01:45`: QUBE-15 S1-S4 完成 + 冒烟修复 —— NaN 梯度爆炸修复（grad clip + reward clip），100 episode 训练通过，Phase 1 具备求解能力；wiki 新增 abstract/qube15-implementation.md，index/readme 已同步
+- `06-16 01:30`: QUBE-15 S1-S4 完成 —— quantum_state.py + hamiltonian.py + test_hamiltonian.py (26 pass) + ppo_train.py + config.py (20 params)，冒烟全链路通过，待 S5 训练
+- `06-15 23:30`: QUBE-15 Phase 2 推导 + 计划完成 —— 15-puzzle 量子化推导（|k_x,k_y⟩ 单粒子态、四阶段行分组 Ĥ、J_{ij} Ising 耦合、λ 软约束）；计划 5 步（S1-S5）已制定，状态 waiting；wiki 新增 abstract/docs/qube15-derivation.md、plan/qube15-implementation.md、docs/qube15/derivation.md
+- `06-15 23:00`: QUBE Phase 1 完成 —— 阅读文献原文 + 用户指南，跑通 52 个单元测试（assert_→assertTrue 修复），确认仅 numpy 依赖；wiki 新增 abstract/docs/qube-paper.md、abstract/qube-code.md，index/readme 已同步
 - `06-15 20:00`: wiki 记忆库压缩 —— index.md 笔记精简（4→3 节，~30→~15 行），更新日志 21→10 条；readme.md 导航 18→8 组，状态 19→7 条
 - `06-15 19:30`: PPO + DeepCubeA 模型/图表保存机制对齐 DeepCubeA —— latest 间隔覆盖 + best + final 三策略，三面板累积图间隔更新，config 新增 `PPO_DEEPCUBEA_SAVE_INTERVAL`
 - `06-15 19:00`: DeepCubeA 官方 vs 自研网络架构对比 —— 逐层对比 ResnetModel 与 DeepCubeANetwork（one-hot 位置、归一化类型、ResBlock 结构、参数量）
