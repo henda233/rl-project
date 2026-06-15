@@ -23,6 +23,7 @@ wiki/
 │   │   ├── digital-huarongdao-design.md
 │   │   ├── deepcubea-research.md
 │   │   ├── deepcubea-loss-analysis.md
+│   │   ├── deepcubea-official-bug-postmortem.md
 │   │   └── ppo-deepcubea-shaping-analysis.md
 │   ├── gymnasium/     // gymnasium 参考文档摘要
 │   │   ├── agent-training.md
@@ -41,7 +42,11 @@ wiki/
 │   ├── deepcubea-bwas-analysis.md
 │   ├── deepcubea-target-network.md
 │   ├── deepcubea-online-validation.md
-│   └── deepcubea-puzzle24-adaptation.md
+│   ├── deepcubea-official-model-evaluation.md
+│   ├── deepcubea-official-repo.md
+│   ├── deepcubea-puzzle24-adaptation.md
+│   ├── ppo-deepcubea-agent.md
+│   └── deepcubea-network-architecture-comparison.md
 ├── request/           // 用户需求
 └── plan/              // 执行计划
 ```
@@ -49,39 +54,20 @@ wiki/
 ## 阅读导航
 
 1. **了解项目全貌** → 从 `index.md` 开始
-2. **了解华容道环境** → `abstract/huarongdao-env.md`
-3. **了解 PPO 算法** → `abstract/ppo-impl.md`
-4. **了解 RND 算法** → `abstract/rnd-impl.md`
-5. **了解 DeepCubeA 方法** → `abstract/docs/deepcubea-research.md`
-6. **了解 DeepCubeA 网络** → `abstract/deepcubea-network.md`
-7. **了解 DeepCubeA 搜索** → `abstract/deepcubea-search.md`
-8. **了解 DeepCubeA 训练** → `abstract/deepcubea-target-network.md`
-9. **了解 DeepCubeA 在线采样** → `abstract/deepcubea-online-validation.md`
-10. **了解 DeepCubeA 训练 Loss 分析** → `abstract/docs/deepcubea-loss-analysis.md`
-11. **了解 PPO + J(s) 势函数塑形分析** → `abstract/docs/ppo-deepcubea-shaping-analysis.md`
-12. **了解官方预训练模型评估** → `abstract/deepcubea-official-model-evaluation.md`
-13. **了解官方模型评估 Bug 复盘** → `abstract/docs/deepcubea-official-bug-postmortem.md`
-14. **查看设计文档** → `abstract/docs/digital-huarongdao-design.md`
-15. **了解官方 BWAS 分析** → `abstract/deepcubea-bwas-analysis.md`
-16. **了解 24-Puzzle 适配计划** → `abstract/deepcubea-puzzle24-adaptation.md`
+2. **华容道环境与设计** → `abstract/huarongdao-env.md`、`abstract/docs/digital-huarongdao-design.md`
+3. **PPO + RND 算法** → `abstract/ppo-impl.md`、`abstract/rnd-impl.md`
+4. **DeepCubeA 核心方法** → `abstract/docs/deepcubea-research.md`、`abstract/deepcubea-network.md`、`abstract/deepcubea-search.md`、`abstract/deepcubea-target-network.md`、`abstract/deepcubea-online-validation.md`、`abstract/docs/deepcubea-loss-analysis.md`
+5. **PPO + DeepCubeA J(s) 势函数塑形** → `abstract/docs/ppo-deepcubea-shaping-analysis.md`、`abstract/ppo-deepcubea-agent.md`
+6. **官方模型评估系列** → `abstract/deepcubea-official-model-evaluation.md`、`abstract/docs/deepcubea-official-bug-postmortem.md`、`abstract/deepcubea-bwas-analysis.md`、`abstract/deepcubea-network-architecture-comparison.md`
+7. **24-Puzzle 适配** → `abstract/deepcubea-puzzle24-adaptation.md`
+8. **参考文档** → `abstract/gymnasium/`、`abstract/examples/`
 
 ## 当前状态
 
-- ✅ 数字华容道环境实现
-- ✅ PPO 算法实现
-- ✅ PPO + RND 算法实现
-- ✅ MountainCar 时代代码已清理
-- ✅ DeepCubeA 神经网络训练完成（v1: best loss=0.0138）
-- ✅ DeepCubeA 加权 A* 搜索完成（v1 Short 档胜率 32%，v2 待重训）
-- ✅ DeepCubeA 数据生成/训练分离
-- ✅ DeepCubeA A* 搜索推理优化（批量转移 + bytes 状态 + GPU 可配）
-- ✅ DeepCubeA 批量更新 + 固定目标 AVI（外层 Bellman 备份 + 内层早停监督学习）
-- ✅ DeepCubeA 在线采样 + 轻量验证（在线混合采样 + LN + 分层 Bellman MSE + 贪心展开 + 完整 A*）
-- ✅ DeepCubeA BN → LayerNorm 替换（消除 batch_size≥2 约束 + 删除所有 .eval() 调用）
-- ✅ DeepCubeA θ_c 阈值更新（独立 target_network + 验证集拆分 + 硬阻断 Bellman 正反馈雪崩）
-- ✅ config.py 二次整理（删除孤儿参数 + 拆分独立 Data Generation section，45 参数 6 section）
-- ✅ 代码/测试清理（合并搜索测试到主模块，删除冗余旧测试）
-- ✅ PPO + DeepCubeA J(s) 势函数塑形可行性分析
-- ✅ DeepCubeA Checkpoint 与 Loss 图保存优化（latest.pt 覆盖式 + CSV + 累积曲线图每轮外层同步更新）
-- ✅ DeepCubeA 官方预训练模型评估框架（ResnetModel 移植 + 三项评估：Bellman MSE / 贪心展开 / A*）
-- ✅ DeepCubeA 官方 BWAS 实现分析（官方 AStar 类 + C++ 详解，核心结论：批量 GPU 推理已等价实现，不建议拷贝）
+- ✅ 数字华容道环境 + PPO + RND 算法实现
+- ✅ DeepCubeA 核心链路：网络训练 → 加权 A* 搜索 → 推理优化 → 批量更新 AVI
+- ✅ DeepCubeA 高级特性：在线采样 + LayerNorm + θ_c 阈值更新（硬阻断 Bellman 正反馈雪崩）
+- ✅ 官方模型评估系列：移植 → 三项评估 → Bug 复盘 → BWAS 分析 → 架构对比
+- ✅ PPO + DeepCubeA J(s) 势函数塑形（方案 A，γ=0.98）
+- ✅ 工程优化：config 整理、Checkpoint/Loss 图保存优化
+- ✅ 24-Puzzle 适配（仅评估，不训练）

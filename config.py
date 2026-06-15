@@ -84,3 +84,24 @@ DEEPCUBEA_OFFICIAL_USE_OFFICIAL_DATA = False  # 是否使用官方测试数据�
 DEEPCUBEA_OFFICIAL_T_MIN = 3               # 随机游走最小步数（USE_OFFICIAL_DATA=False 时生效）
 DEEPCUBEA_OFFICIAL_T_MAX = 500             # 随机游走最大步数（USE_OFFICIAL_DATA=False 时生效）
 DEEPCUBEA_OFFICIAL_NUM_TEST_STATES = 500   # 生成测试状态数（USE_OFFICIAL_DATA=False 时生效）
+
+# ==================== PPO + DeepCubeA J(s) Shaping（ppo_deepcubea_agent.py 使用） ====================
+
+PPO_DEEPCUBEA_HIDDEN_DIM = 256           # 隐藏层维度
+PPO_DEEPCUBEA_ACTOR_LR = 1e-3            # Actor 学习率
+PPO_DEEPCUBEA_CRITIC_LR = 1e-3           # Critic 学习率
+PPO_DEEPCUBEA_GAMMA = 0.98               # 折扣因子（GAE + 势函数塑形共用）
+PPO_DEEPCUBEA_LMBDA = 0.95               # GAE λ
+PPO_DEEPCUBEA_EPOCHS = 10                # 每批数据训练轮数
+PPO_DEEPCUBEA_EPS = 0.2                  # Clip 范围
+PPO_DEEPCUBEA_NUM_EPISODES = 10000       # 训练总 episode 数
+PPO_DEEPCUBEA_MAX_STEPS = 200            # 每 episode 最大步数（truncated 截断）
+PPO_DEEPCUBEA_EVAL_INTERVAL = 1000       # 评估间隔（episode 数）
+PPO_DEEPCUBEA_NUM_EVAL_EPISODES = 10     # 每次评估运行的 episode 数
+PPO_DEEPCUBEA_ENTROPY_COEF = 0.05        # 熵正则化系数
+PPO_DEEPCUBEA_BETA = 1.0                 # 塑形奖励权重（r_total = -1 + β·(J(s) - γ·J(s'))）
+PPO_DEEPCUBEA_USE_GPU = False            # PPO 训练设备（True=cuda, False=cpu）
+PPO_DEEPCUBEA_RESNET_BLOCKS = 2          # 残差块数量
+PPO_DEEPCUBEA_J_MAX = 50              # J(s) 归一化上界（经验估计，S6 冒烟后调整）
+PPO_DEEPCUBEA_SAVE_INTERVAL = 10         # 模型/图表保存间隔（episode 数），0=禁用
+PPO_DEEPCUBEA_MODEL_PATH = "data/model_state_dict.pt"  # DeepCubeA 模型路径
